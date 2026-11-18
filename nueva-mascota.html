@@ -11,10 +11,10 @@
     <div class="contenedor-login">
         <div class="cabecera">
             <h1>Pet Care 🐾</h1>
-            <p>Crea tu cuenta para empezar</p>
+            <p>Registra los datos de tu peludo</p>
         </div>
         
-        <form id="form-registro">
+        <form id="form-Mascota">
             
             <div class="grupo-input">
                 <label>Nombre</label>
@@ -32,17 +32,13 @@
             </div>
 
             <div class="grupo-input">
-                <label>Especie</label>
-                <input type="text" id="especieInput" placeholder="Ej: Gato" required>
-            </div>
-               <div class="grupo-input">
-                <label>Genero</label>
+                <label>Género</label>
                 <input type="text" id="generoInput" placeholder="Macho/hembra" required>
             </div>
 
             <div class="grupo-input">
-                <label>NIF</label>
-                <input type="text" id="nifinput" maxlength="9" placeholder="Identificación" required>
+                <label>NIF/Chip</label>
+                <input type="text" id="nifinput" maxlength="15" placeholder="Identificación" required>
             </div>
             
             <div class="grupo-input">
@@ -54,21 +50,17 @@
                 <label>Peso</label>
                 <input type="text" id="pesoInput" placeholder="Kg" required>
             </div>
-
-            <div class="grupo-input">
-                <label>Contraseña</label>
-                <input type="text" id="passwordInput" placeholder="••••••••" required>
-            </div>
             
             <div class="grupo-input">
-                <label>Datos relevantes</label>
-                <input type="text" id="datosdInput" placeholder="      " required>
+                <label>Datos relevantes (Alergias, etc.)</label>
+                <input type="text" id="datosdInput" placeholder="Ninguno" required>
             </div>
 
 
             <button type="submit" class="btn-principal">Registrar nueva mascota</button>
         </form>
-        </p>
+    <p id="mensaje" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
     </div>
+    
 </body>
 </html>
