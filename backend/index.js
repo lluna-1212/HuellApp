@@ -41,6 +41,37 @@ app.post('/api/registro', async (req, res) => {
     }
 });
 // ==============================
+//RUTA LOGIN========
+app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const resultado = await pool.query(
+            'SELECT id, nombre, apellidos, email, rol, hash_password FROM users WHERE email = $1',
+            [email]
+        );
+
+        if (resultado.rows.length === 0) {
+            return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
+        }
+
+        const usuario = resultado.rows[0];
+
+        if (usuario.hash_password !== password) {
+            return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
+        }
+
+        delete usuario.hash_password;
+
+        res.json({
+            mensaje: 'Inicio de sesión correcto',
+            usuario
+        });
+    } catch (error) {
+        console.error("🚨 ERROR AL INICIAR SESIÓN:", error);
+        res.status(500).json({ error: 'Error en el servidor al iniciar sesión' });
+    }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
