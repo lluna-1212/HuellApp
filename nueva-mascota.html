@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Care - Registro</title>
+    <title>HuellApp - Nueva Mascota</title>
     <link rel="stylesheet" href="style.css">
 </head>
+  
 <body class="pantalla-centrada">
-
     <div class="contenedor-login">
         <div class="cabecera">
-            <h1>Pet Care 🐾</h1>
-            <p>Crea tu cuenta para empezar</p>
+
+            <h1>HuellApp 🐾</h1>
+            <p>Registra los datos de tu pelud@</p>
         </div>
         
-        <form id="form-registro">
-            
+        <form id="form-nueva-mascota">
+          
             <div class="grupo-input">
                 <label>Nombre</label>
-                <input type="text" id="nombreInput" placeholder="Ej: Nombre Animal" required>
+                <input type="text" id="nombreInput" placeholder="Ej: Max" required>
             </div>
 
             <div class="grupo-input">
@@ -41,18 +42,19 @@
             </div>
 
             <div class="grupo-input">
-                <label>NIF</label>
-                <input type="text" id="nifinput" maxlength="9" placeholder="Identificación" required>
+                <label>NIF/Chip</label>
+                <input type="text" id="nifInput" maxlength="15" placeholder="Identificación" required>
+
             </div>
             
             <div class="grupo-input">
                 <label>Fecha Nacimiento</label>
-                <input type="text" id="fechaNacimiento" placeholder="00-00-00">
+                <input type="date" id="fechaNacimiento" placeholder="00-00-00">
             </div>
 
             <div class="grupo-input">
                 <label>Peso</label>
-                <input type="text" id="pesoInput" placeholder="Kg" required>
+                <input type="text" id="pesoInput" placeholder="12 Kg" required>
             </div>
 
             <div class="grupo-input">
@@ -61,14 +63,81 @@
             </div>
             
             <div class="grupo-input">
-                <label>Datos relevantes</label>
-                <input type="text" id="datosdInput" placeholder="      " required>
+                <label>Datos relevantes (Alergias, etc.)</label>
+                <input type="text" id="datosdInput" placeholder="Ninguno">
             </div>
 
 
             <button type="submit" class="btn-principal">Registrar nueva mascota</button>
         </form>
-        </p>
+
+    <p id="mensaje" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
+    <p id="mensaje" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="dashboard.html" style="color: #0d9488; text-decoration: none; font-weight: bold;">
+                ← Volver a mis mascotas
+            </a>
+        </div>
     </div>
+    </div>
+    <script>
+        const form = document.getElementById('form-nueva-mascota');
+        const mensaje = document.getElementById('mensaje');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const usuarioGuardado = JSON.parse(localStorage.getItem('usuario'));
+
+            if (!usuarioGuardado) {
+                mensaje.style.color = 'red';
+                mensaje.textContent = 'Debes iniciar sesión antes de registrar una mascota.';
+                return;
+            }
+
+            const datos = {
+                nombre: document.getElementById('nombreInput').value,
+                especie: document.getElementById('especieInput').value,
+                raza: document.getElementById('razaInput').value,
+                genero: document.getElementById('generoInput').value,
+                nif_chip: document.getElementById('nifInput').value,
+                fecha_nacimiento: document.getElementById('fechaNacimiento').value,
+                peso: document.getElementById('pesoInput').value,
+                datos_relevantes: document.getElementById('datosdInput').value || 'Ninguno',
+                user_id: usuarioGuardado.id
+            };
+
+            try {
+                const respuesta = await fetch('https://huellapp-api.onrender.com/api/mascotas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(datos)
+                });
+
+                const resultado = await respuesta.json();
+
+                if (respuesta.ok) {
+                    mensaje.style.color = '#0d9488';
+                    mensaje.textContent = '¡Mascota registrada con éxito!';
+                    form.reset();
+                    setTimeout(() => { 
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+                } else {
+                    mensaje.style.color = 'red';
+                    mensaje.textContent = 'Error: ' + resultado.error;
+                }
+            } catch (error) {
+                console.error('Error de conexión:', error);
+                mensaje.style.color = 'red';
+                mensaje.textContent = 'No se pudo conectar con el servidor.';
+            }
+        });
+    </script>
+
+  
 </body>
 </html>

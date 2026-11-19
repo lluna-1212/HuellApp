@@ -16,8 +16,11 @@ body {
 .pantalla-centrada {
     display: flex;
     justify-content: center; /* Centra horizontalmente */
-    align-items: center;     /* Centra verticalmente */
-    height: 100vh;           /* Ocupa el 100% del alto de la pantalla */
+    align-items: flex-start;     /* Evita que corte el titulo por arriba */
+    height: auto;              /*Anula cualquier height fijo previo*/
+    min-height: 100vh;       /* Ocupa el 100%, crece si el formulario es largo */
+    padding: 40px 20px;     /*Deja aire arriba y abajo al hacer scroll */
+    box-sizing: border-box; /*Evita el padding genere scroll inecesario */
 }
 
 .contenedor-login {
