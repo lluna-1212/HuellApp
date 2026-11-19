@@ -6,16 +6,17 @@
     <title>HuellApp - Nueva Mascota</title>
     <link rel="stylesheet" href="style.css">
 </head>
+  
 <body class="pantalla-centrada">
-
     <div class="contenedor-login">
         <div class="cabecera">
+
             <h1>HuellApp 🐾</h1>
             <p>Registra los datos de tu pelud@</p>
         </div>
         
         <form id="form-nueva-mascota">
-            
+          
             <div class="grupo-input">
                 <label>Nombre</label>
                 <input type="text" id="nombreInput" placeholder="Ej: Max" required>
@@ -32,13 +33,18 @@
             </div>
 
             <div class="grupo-input">
-                <label>Género</label>
+                <label>Especie</label>
+                <input type="text" id="especieInput" placeholder="Ej: Gato" required>
+            </div>
+               <div class="grupo-input">
+                <label>Genero</label>
                 <input type="text" id="generoInput" placeholder="Macho/hembra" required>
             </div>
 
             <div class="grupo-input">
                 <label>NIF/Chip</label>
                 <input type="text" id="nifInput" maxlength="15" placeholder="Identificación" required>
+
             </div>
             
             <div class="grupo-input">
@@ -50,6 +56,11 @@
                 <label>Peso</label>
                 <input type="text" id="pesoInput" placeholder="12 Kg" required>
             </div>
+
+            <div class="grupo-input">
+                <label>Contraseña</label>
+                <input type="text" id="passwordInput" placeholder="••••••••" required>
+            </div>
             
             <div class="grupo-input">
                 <label>Datos relevantes (Alergias, etc.)</label>
@@ -59,6 +70,7 @@
 
             <button type="submit" class="btn-principal">Registrar nueva mascota</button>
         </form>
+
     <p id="mensaje" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
     <p id="mensaje" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
 
@@ -126,6 +138,6 @@
         });
     </script>
 
-    
+  
 </body>
 </html>
