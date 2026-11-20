@@ -3,53 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Care -Mis Mascotas-</title>
+    <title>HuellApp - Panel de Control</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Barra de navegación superior -->
-    <nav class="navbar">
-        <div class="nav-logo">HuellApp 🐾</div>
-        <div class="nav-links">
-            <span>Hola, Juan (Dueño)</span>
-            <a href="login.html" class="link-salir">Cerrar sesión</a>
-        </div>
-    </nav>
 
-    <!-- Contenido principal -->
-    <main class="contenedor-principal">
-        <div class="cabecera-dashboard">
-            <h2>Mis Mascotas</h2>
-            <!-- Este botón lleva a la HU-09 -->
-            <a href="nueva-mascota.html" class="btn-principal" style="width: auto; padding: 10px 20px; text-decoration: none;">+ Añadir nueva mascota</a>
-        </div>
+    <div class="layout-dashboard">
 
-        <!-- Cuadrícula de tarjetas de mascotas -->
-        <div class="grid-mascotas">
-            
-            <!-- Tarjeta Mascota 1 -->
-            <!-- Al hacer clic, lleva al historial (HU-08) -->
-            <a href="historial.html" class="tarjeta-mascota">
-                <div class="icono-mascota">🐶</div>
-                <div class="info-mascota">
-                    <h3>Toby</h3>
-                    <p>Perro - Golden Retriever</p>
-                    <span class="codigo-chip">ID: PET-4592</span>
+        <!-- BARRA LATERAL (SIDEBAR) -->
+        <aside class="sidebar">
+            <div class="marca">
+                <h2>HuellApp 🐾</h2>
+            </div>
+
+            <nav class="menu-lateral">
+                <a href="#" class="item-menu activo">🐶 Mis Mascotas</a>
+                <a href="#" class="item-menu">📅 Citas Médicas</a>
+                <a href="#" class="item-menu">💉 Cartilla Vacunas</a>
+                <a href="#" class="item-menu">⚙️ Configuración</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>HuellApp v1.0</p>
+            </div>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL -->
+        <div class="contenido-principal">
+
+            <!-- BARRA SUPERIOR CON EL USUARIO ARRIBA A LA DERECHA -->
+            <header class="topbar">
+                <div class="titulo-pagina">
+                    <span>Panel Principal</span>
                 </div>
-            </a>
 
-            <!-- Tarjeta Mascota 2 -->
-            <a href="historial.html" class="tarjeta-mascota">
-                <div class="icono-mascota">🐱</div>
-                <div class="info-mascota">
-                    <h3>Luna</h3>
-                    <p>Gato - Siamés</p>
-                    <span class="codigo-chip">ID: PET-1024</span>
+                <div class="perfil-usuario">
+                    <div class="avatar-usuario" id="inicial-usuario">U</div>
+                    <div class="info-usuario">
+                        <!-- Aquí se cargará el nombre dinámicamente -->
+                        <span class="nombre-usuario" id="nombre-mostrar">Cargando...</span>
+                        <span class="rol-usuario" id="rol-mostrar">Dueño</span>
+                    </div>
+                    <button type="button" class="btn-cerrar-sesion" id="btn-cerrar-sesion">Cerrar sesión</button>
                 </div>
-            </a>
+            </header>
+
+            <!-- ÁREA DE TRABAJO CON FICHAS DE MASCOTAS -->
+            <main class="area-trabajo">
+                <div class="cabecera-seccion">
+                    <div>
+                        <h1>Mis Mascotas</h1>
+                        <p class="subtitulo">Haz clic en una ficha para ver su información ampliada</p>
+                    </div>
+                    <a href="nueva-mascota.html" class="btn-anadir">+ Añadir nueva mascota</a>
+                </div>
+
+                <div class="grid-mascotas" id="grid-mascotas">
+                    <div class="tarjeta-mascota"
+                         data-id="PET-4592"
+                         data-nombre="Toby"
+                         data-tipo="Perro"
+                         data-raza="Golden Retriever"
+                         data-edad="3 años"
+                         data-peso="29 kg"
+                         data-vacunas="Al día"
+                         data-notas="Muy sociable y activo en paseos.">
+                        <div class="tarjeta-header">
+                            <span class="badge-id">ID: PET-4592</span>
+                            <span class="estado-activo">Activo</span>
+                        </div>
+                        <div class="mascota-avatar">🐶</div>
+                        <h3>Toby</h3>
+                        <p class="raza">Perro • Golden Retriever</p>
+                        <div class="tarjeta-acciones">
+                            <button type="button" class="btn-secundario">Ver ficha</button>
+                            <button type="button" class="btn-secundario">Historial</button>
+                        </div>
+                    </div>
+
+                    <div class="tarjeta-mascota"
+                         data-id="PET-1024"
+                         data-nombre="Luna"
+                         data-tipo="Gato"
+                         data-raza="Siamés"
+                         data-edad="2 años"
+                         data-peso="4,2 kg"
+                         data-vacunas="Revisión próxima"
+                         data-notas="Tranquila en casa, algo tímida en clínica.">
+                        <div class="tarjeta-header">
+                            <span class="badge-id">ID: PET-1024</span>
+                            <span class="estado-activo">Activo</span>
+                        </div>
+                        <div class="mascota-avatar">🐱</div>
+                        <h3>Luna</h3>
+                        <p class="raza">Gato • Siamés</p>
+                        <div class="tarjeta-acciones">
+                            <button type="button" class="btn-secundario">Ver ficha</button>
+                            <button type="button" class="btn-secundario">Historial</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
 
         </div>
-    </main>
+    </div>
+
+    <!-- FICHA AMPLIADA AL HACER CLIC -->
+    <div class="modal-overlay" id="modal-ficha" aria-hidden="true">
+        <div class="modal-ficha">
+            <button type="button" class="modal-cerrar" id="cerrar-modal" aria-label="Cerrar">&times;</button>
+
+            <div class="ficha-cabecera">
+                <div class="mascota-avatar" id="ficha-avatar">🐾</div>
+                <div>
+                    <span class="badge-id" id="ficha-id">ID: ---</span>
+                    <h3 id="ficha-nombre">Nombre</h3>
+                    <p class="raza" id="ficha-subtitulo">Especie • Raza</p>
+                </div>
+            </div>
+
+            <div class="ficha-datos">
+                <p><strong>Edad:</strong> <span id="ficha-edad">-</span></p>
+                <p><strong>Peso:</strong> <span id="ficha-peso">-</span></p>
+                <p><strong>Vacunas:</strong> <span id="ficha-vacunas">-</span></p>
+                <p><strong>Notas:</strong> <span id="ficha-notas">-</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!--PODER VISUALIZAR EL NOMBRE DEL USUARIO-->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const guardado = localStorage.getItem("usuarioActual");
+            if (guardado) {
+                const usuario = JSON.parse(guardado);
+                const nombre = usuario.nombre || "Usuario";
+                const rol = usuario.rol || "Dueño";
+                document.getElementById("nombre-mostrar").textContent = `Hola, ${nombre}`;
+                document.getElementById("rol-mostrar").textContent = rol;
+                document.getElementById("inicial-usuario").textContent = nombre.charAt(0).toUpperCase();
+            }
+
+            const modal = document.getElementById("modal-ficha");
+            const btnCerrar = document.getElementById("cerrar-modal");
+
+            document.querySelectorAll(".tarjeta-mascota").forEach((tarjeta) => {
+                tarjeta.addEventListener("click", () => {
+                    const d = tarjeta.dataset;
+                    document.getElementById("ficha-avatar").textContent = tarjeta.querySelector(".mascota-avatar").textContent;
+                    document.getElementById("ficha-id").textContent = `ID: ${d.id}`;
+                    document.getElementById("ficha-nombre").textContent = d.nombre;
+                    document.getElementById("ficha-subtitulo").textContent = `${d.tipo} • ${d.raza}`;
+                    document.getElementById("ficha-edad").textContent = d.edad;
+                    document.getElementById("ficha-peso").textContent = d.peso;
+                    document.getElementById("ficha-vacunas").textContent = d.vacunas;
+                    document.getElementById("ficha-notas").textContent = d.notas;
+
+                    modal.classList.add("activo");
+                    modal.setAttribute("aria-hidden", "false");
+                });
+            });
+
+            function cerrarFicha() {
+                modal.classList.remove("activo");
+                modal.setAttribute("aria-hidden", "true");
+            }
+
+            btnCerrar.addEventListener("click", cerrarFicha);
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) cerrarFicha();
+            });
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && modal.classList.contains("activo")) cerrarFicha();
+            });
+
+            document.getElementById("btn-cerrar-sesion").addEventListener("click", () => {
+                localStorage.removeItem("usuarioActual");
+                window.location.href = "login.html";
+            });
+        });
+    </script>
 
 </body>
 </html>

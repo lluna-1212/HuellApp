@@ -1,30 +1,33 @@
-/* Reseteo básico para que todos los navegadores se vean igual */
+/* =========================================
+   RESETEO Y ESTILOS BASE
+   ========================================= */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-    background-color: #f9fafb;
-    display: flex;
-    justify-content: center; /* Centra horizontalmente */
-    align-items: center;     /* Centra verticalmente */
-    height: 100vh;           /* Ocupa toda la pantalla */
+    background-color: #f4f7f6;
+    color: #1f2937;
+    display: block;
+    min-height: 100vh;
 }
+
+/* =========================================
+   PANTALLAS CENTRADAS (LOGIN Y REGISTRO)
+   ========================================= */
 .pantalla-centrada {
     display: flex;
-    justify-content: center; /* Centra horizontalmente */
-    align-items: flex-start;     /* Evita que corte el titulo por arriba */
-    height: auto;              /*Anula cualquier height fijo previo*/
-    min-height: 100vh;       /* Ocupa el 100%, crece si el formulario es largo */
-    padding: 40px 20px;     /*Deja aire arriba y abajo al hacer scroll */
-    box-sizing: border-box; /*Evita el padding genere scroll inecesario */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px 20px;
 }
 
 .contenedor-login {
-    background-color: white;
+    background-color: #ffffff;
     padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -56,49 +59,52 @@ body {
     margin-bottom: 5px;
 }
 
-.grupo-input input {
+.grupo-input input,
+.grupo-input select {
     width: 100%;
     padding: 10px;
     border: 1px solid #d1d5db;
     border-radius: 6px;
     outline: none;
+    background-color: #ffffff;
+    color: #1f2937;
 }
 
-.grupo-input input:focus {
-    border-color: #0d9488; /* Color verde marca al hacer clic */
+.grupo-input input:focus,
+.grupo-input select:focus {
+    border-color: #0d9488;
 }
 
 .btn-principal {
     width: 100%;
     background-color: #0d9488;
-    color: white;
-    padding: 10px;
+    color: #ffffff;
+    padding: 10px 18px;
     border: none;
     border-radius: 6px;
     font-size: 1rem;
     cursor: pointer;
     margin-top: 10px;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: background-color 0.2s ease;
 }
 
 .btn-principal:hover {
     background-color: #0f766e;
 }
+
 /* =========================================
-   ESTILOS DEL DASHBOARD Y NAVEGACIÓN
+   NAVEGACIÓN SUPERIOR (NAVBAR)
    ========================================= */
-
-body {
-    /* Sobrescribimos el centrado del login para las páginas internas */
-    display: block; 
-}
-
 .navbar {
-    background-color: white;
+    background-color: #ffffff;
     padding: 15px 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .nav-logo {
@@ -108,14 +114,80 @@ body {
 }
 
 .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     font-size: 0.9rem;
     color: #374151;
 }
 
 .link-salir {
-    margin-left: 15px;
-    color: #ef4444; /* Color rojo para salir */
+    color: #ef4444;
     text-decoration: none;
+    font-weight: 600;
+}
+
+.link-salir:hover {
+    text-decoration: underline;
+}
+
+/* =========================================
+   LAYOUT DEL DASHBOARD (SIDEBAR + TOPBAR)
+   ========================================= */
+.layout-dashboard {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    width: 250px;
+    background-color: #0f766e;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    padding: 25px 20px;
+}
+
+.marca h2 {
+    font-size: 1.5rem;
+    margin-bottom: 40px;
+    letter-spacing: 0.5px;
+}
+
+.menu-lateral {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+}
+
+.item-menu {
+    color: #ccfbf1;
+    text-decoration: none;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.item-menu:hover,
+.item-menu.activo {
+    background-color: #115e59;
+    color: #ffffff;
+}
+
+.sidebar-footer {
+    font-size: 0.8rem;
+    color: #99f6e4;
+    text-align: center;
+}
+
+/* --- CONTENIDO PRINCIPAL --- */
+.contenido-principal {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .contenedor-principal {
@@ -124,64 +196,298 @@ body {
     padding: 0 20px;
 }
 
+/* --- TOPBAR (USUARIO ARRIBA A LA DERECHA) --- */
+.topbar {
+    background-color: #ffffff;
+    height: 70px;
+    padding: 0 35px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.titulo-pagina {
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.perfil-usuario {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.avatar-usuario {
+    width: 38px;
+    height: 38px;
+    background-color: #0d9488;
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.info-usuario {
+    display: flex;
+    flex-direction: column;
+}
+
+.nombre-usuario {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.rol-usuario {
+    font-size: 0.75rem;
+    color: #0d9488;
+    font-weight: 600;
+}
+
+.btn-cerrar-sesion {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: background-color 0.2s;
+}
+
+.btn-cerrar-sesion:hover {
+    background-color: #fecaca;
+}
+
+/* =========================================
+   ÁREA DE TRABAJO Y TARJETAS DE MASCOTAS
+   ========================================= */
+.area-trabajo {
+    padding: 35px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.cabecera-seccion,
 .cabecera-dashboard {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
+.cabecera-seccion h1,
 .cabecera-dashboard h2 {
-    color: #1f2937;
+    font-size: 1.8rem;
+    color: #111827;
 }
 
-/* Sistema de cuadrícula para las tarjetas */
+.subtitulo {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin-top: 4px;
+}
+
+.btn-anadir,
+.btn-anadir-mascota {
+    background-color: #0d9488;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    width: auto;
+    margin-top: 0;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-anadir:hover,
+.btn-anadir-mascota:hover {
+    background-color: #0f766e;
+    transform: translateY(-1px);
+}
+
+/* Cuadrícula de tarjetas */
 .grid-mascotas {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
 }
 
 .tarjeta-mascota {
-    background-color: white;
-    border-radius: 10px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    text-align: center;
     text-decoration: none;
     color: inherit;
-    border: 1px solid #e5e7eb;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
 .tarjeta-mascota:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
     border-color: #0d9488;
 }
 
-.icono-mascota {
-    font-size: 2.5rem;
-    margin-right: 15px;
+.tarjeta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
 }
 
+.badge-id,
+.codigo-chip {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.estado-activo {
+    background-color: #d1fae5;
+    color: #065f46;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 20px;
+}
+
+.mascota-avatar,
+.icono-mascota {
+    font-size: 3.5rem;
+    background-color: #f0fdfa;
+    width: 85px;
+    height: 85px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tarjeta-mascota h3,
 .info-mascota h3 {
+    font-size: 1.3rem;
+    color: #111827;
     margin-bottom: 5px;
+}
+
+.raza,
+.info-mascota p {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.tarjeta-acciones {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-secundario {
+    flex: 1;
+    padding: 8px;
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-secundario:hover {
+    background-color: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.tarjeta-mascota {
+    cursor: pointer;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.modal-overlay.activo {
+    display: flex;
+}
+
+.modal-ficha {
+    position: relative;
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+    border: 1px solid #e5e7eb;
+}
+
+.modal-cerrar {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.modal-cerrar:hover {
     color: #1f2937;
 }
 
-.info-mascota p {
-    font-size: 0.85rem;
-    color: #6b7280;
-    margin-bottom: 5px;
+.ficha-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-.codigo-chip {
-    font-size: 0.75rem;
-    background-color: #f3f4f6;
-    padding: 3px 8px;
-    border-radius: 4px;
-    color: #4b5563;
-    font-weight: bold;
+.ficha-cabecera .mascota-avatar {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.ficha-cabecera .raza {
+    margin-bottom: 0;
+}
+
+.ficha-datos p {
+    font-size: 0.9rem;
+    color: #374151;
+    margin-bottom: 10px;
+}
+
+.ficha-datos p:last-child {
+    margin-bottom: 0;
 }
