@@ -77,3 +77,38 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en puerto ${PORT}`);
 });
+// RUTA REGISTRO NUEVA MASCOTAS
+app.post('/api/mascotas', async (req, res) => {
+    const {
+        nombre,
+        especie,
+        raza,
+        genero,
+        nif_chip,
+        fecha_nacimiento,
+        peso,
+        datos_relevantes,
+        user_id
+    } = req.body;
+    
+    try {
+        const nuevaMascota = await pool.query(
+            `INSERT INTO mascotas
+            (nombre, especie, raza, genero, nif_chip, fecha_nac, peso, datos_relevantes, usuario_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING *`,
+            [nombre, especie, raza, genero, nif_chip, fecha_nacimiento || null, peso, datos_relevantes, user_id]
+        );
+
+        res.status(201).json({
+            mensaje: 'Mascota registrada con éxito',
+            mascota: nuevaMascota.rows[0]
+        });
+    } catch (error) {
+        console.error("🚨 ERROR AL REGISTRAR MASCOTA:", error);
+        if (error.code === '23505') {
+            return res.status(400).json({ error: 'Ese NIF/Chip ya está registrado' });
+        }
+        res.status(500).json({ error: 'Error al guardar la mascota en la base de datos' });
+    }
+});
