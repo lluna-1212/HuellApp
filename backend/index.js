@@ -73,6 +73,45 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// OBTENER MASCOTAS DE UN USUARIO
+app.get('/api/mascotas', async (req, res) => {
+    const { usuario_id } = req.query;
+
+    if (!usuario_id) {
+        return res.status(400).json({ error: 'Falta el usuario_id' });
+    }
+
+    try {
+        const resultado = await pool.query(
+            'SELECT * FROM mascotas WHERE usuario_id = $1 ORDER BY id DESC',
+            [usuario_id]
+        );
+        res.json({ mascotas: resultado.rows });
+    } catch (error) {
+        console.error("🚨 ERROR AL OBTENER MASCOTAS:", error);
+        res.status(500).json({ error: 'Error al cargar las mascotas' });
+    }
+});
+
+// OBTENER UNA MASCOTA POR ID (PARA PERFIL DETALLADO / HISTORIAL)
+app.get('/api/mascotas/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const resultado = await pool.query(
+            'SELECT * FROM mascotas WHERE id = $1',
+            [id]
+        );
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ error: 'Mascota no encontrada' });
+        }
+        res.json({ mascota: resultado.rows[0] });
+    } catch (error) {
+        console.error("🚨 ERROR AL OBTENER MASCOTA:", error);
+        res.status(500).json({ error: 'Error al cargar la mascota' });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en puerto ${PORT}`);
