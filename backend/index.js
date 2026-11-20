@@ -112,6 +112,37 @@ app.get('/api/mascotas/:id', async (req, res) => {
     }
 });
 
+// ACTUALIZAR DATOS DE LA CUENTA DEL DUEÑO
+app.put('/api/usuarios/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nombre, apellidos, telefono, email } = req.body;
+
+    try {
+        const actualizado = await pool.query(
+            `UPDATE users
+             SET nombre = $1, apellidos = $2, telefono = $3, email = $4
+             WHERE id = $5
+             RETURNING id, nombre, apellidos, telefono, email, rol`,
+            [nombre, apellidos, telefono, email, id]
+        );
+
+        if (actualizado.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        res.json({
+            mensaje: 'Datos actualizados correctamente',
+            usuario: actualizado.rows[0]
+        });
+    } catch (error) {
+        console.error("🚨 ERROR AL ACTUALIZAR USUARIO:", error);
+        if (error.code === '23505') {
+            return res.status(400).json({ error: 'Ese correo ya está en uso por otra cuenta' });
+        }
+        res.status(500).json({ error: 'Error al actualizar el perfil' });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en puerto ${PORT}`);
