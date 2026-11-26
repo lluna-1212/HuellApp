@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HuellApp - Panel de Administración</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- BLOQUEO DE ACCESO CON CONTRASEÑA DE ADMIN -->
+    <div class="pantalla-centrada" id="acceso-admin">
+        <div class="contenedor-login">
+            <div class="cabecera">
+                <h1>HuellApp Admin 🛡️</h1>
+                <p>Acceso restringido a administración</p>
+            </div>
+            <form id="form-admin-pass">
+                <div class="grupo-input">
+                    <label for="adminPasswordInput">Contraseña de administrador</label>
+                    <input type="password" id="adminPasswordInput" placeholder="Introduce la clave admin" required>
+                </div>
+                <button type="submit" class="btn-principal">Desbloquear panel</button>
+            </form>
+            <p style="text-align: center; margin-top: 15px; font-size: 0.9rem;">
+                <a href="dashboard.html" style="color: #0d9488; text-decoration: none;">Volver al panel de usuario</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- PANEL ADMIN DESBLOQUEADO -->
+    <div class="layout-dashboard" id="panel-admin" style="display: none;">
+        <aside class="sidebar">
+            <div class="marca">
+                <h2>HuellApp Admin</h2>
+            </div>
+
+            <nav class="menu-lateral">
+                <a href="#resumen" class="item-menu activo">🛡️ Gestión General</a>
+                <a href="dashboard.html" class="item-menu">🐶 Vista Usuario</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>HuellApp v1.0</p>
+            </div>
+        </aside>
+
+        <div class="contenido-principal">
+            <header class="topbar">
+                <div class="titulo-pagina">
+                    <span>Panel de Administración</span>
+                </div>
+
+                <div class="perfil-usuario">
+                    <div class="avatar-usuario">A</div>
+                    <div class="info-usuario">
+                        <span class="nombre-usuario">Administrador</span>
+                        <span class="rol-usuario">ADMIN</span>
+                    </div>
+                    <button type="button" class="btn-cerrar-sesion" id="btn-bloquear-admin">Bloquear</button>
+                </div>
+            </header>
+
+            <main class="area-trabajo" id="resumen">
+                <div class="cabecera-seccion">
+                    <div>
+                        <h1>Usuarios y Mascotas</h1>
+                        <p class="subtitulo">Reasigna mascotas a otro usuario o elimina registros</p>
+                    </div>
+                    <button type="button" class="btn-anadir" id="btn-refrescar-admin">Actualizar datos</button>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <p><strong>Total usuarios:</strong> <span id="total-usuarios">0</span> · <strong>Total mascotas:</strong> <span id="total-mascotas">0</span></p>
+                </div>
+
+                <h2>Usuarios registrados</h2>
+                <div id="tabla-usuarios" style="margin-bottom: 32px;">
+                    <p>Cargando usuarios...</p>
+                </div>
+
+                <h2>Todas las mascotas</h2>
+                <div id="lista-admin-mascotas">
+                    <p>Cargando mascotas...</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://huellapp-api.onrender.com";
+        let claveAdminActual = "";
+
+        function obtenerEmoji(especie = "") {
+            const esp = especie.toLowerCase();
+            if (esp.includes("perro")) return "🐶";
+            if (esp.includes("gato")) return "🐱";
+            return "🐾";
+        }
+
+        async function cargarDatosAdmin() {
+            const res = await fetch(`${API_URL}/api/admin/resumen`, {
+                headers: { "x-admin-password": claveAdminActual }
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "No autorizado");
+            }
+
+            const usuarios = data.usuarios || [];
+            const mascotas = data.mascotas || [];
+
+            document.getElementById("total-usuarios").textContent = usuarios.length;
+            document.getElementById("total-mascotas").textContent = mascotas.length;
+
+            document.getElementById("tabla-usuarios").innerHTML = usuarios.length === 0
+                ? "<p>No hay usuarios registrados.</p>"
+                : usuarios.map((u) => `
+                    <div class="tarjeta-mascota" style="margin-bottom: 10px;">
+                        <strong>ID ${u.id}:</strong> ${u.nombre} ${u.apellidos || ""} (${u.email}) — <span>${u.rol || "USER"}</span>
+                    </div>
+                `).join("");
+
+            const opcionesUsuario = usuarios.map((u) =>
+                `<option value="${u.id}">ID ${u.id} - ${u.nombre} (${u.email})</option>`
+            ).join("");
+
+            document.getElementById("lista-admin-mascotas").innerHTML = mascotas.length === 0
+                ? "<p>No hay mascotas registradas.</p>"
+                : mascotas.map((m) => `
+                    <div class="tarjeta-mascota" style="margin-bottom: 12px;">
+                        <div class="tarjeta-header">
+                            <span class="badge-id">ID Mascota: ${m.id}</span>
+                            <span class="estado-activo">Dueño ID: ${m.usuario_id ?? "Sin asignar"}</span>
+                        </div>
+                        <h3>${obtenerEmoji(m.especie)} ${m.nombre}</h3>
+                        <p class="raza">${m.especie || "Mascota"} • ${m.raza || "Sin raza"} · Dueño actual: ${m.dueno_nombre || "N/A"}</p>
+
+                        <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                            <select class="select-nuevo-dueno" data-mascota-id="${m.id}">
+                                <option value="">Cambiar a usuario...</option>
+                                ${opcionesUsuario}
+                            </select>
+                            <button type="button" class="btn-secundario btn-reasignar" data-mascota-id="${m.id}">Reasignar</button>
+                            <button type="button" class="btn-cerrar-sesion btn-borrar-mascota" data-mascota-id="${m.id}">Borrar</button>
+                        </div>
+                    </div>
+                `).join("");
+
+            if (document.querySelector(".select-nuevo-dueno")) {
+                document.querySelectorAll(".tarjeta-mascota").forEach((card) => {
+                    const select = card.querySelector(".select-nuevo-dueno");
+                    const btnReasignar = card.querySelector(".btn-reasignar");
+                    const btnBorrar = card.querySelector(".btn-borrar-mascota");
+                    if (!select || !btnReasignar || !btnBorrar) return;
+
+                    const mascotaId = btnReasignar.dataset.mascotaId;
+                    const mascotaObj = mascotas.find((item) => String(item.id) === String(mascotaId));
+                    if (mascotaObj && mascotaObj.usuario_id) {
+                        select.value = String(mascotaObj.usuario_id);
+                    }
+
+                    btnReasignar.addEventListener("click", async () => {
+                        const nuevoUsuarioId = select.value;
+                        if (!nuevoUsuarioId) {
+                            alert("Selecciona un usuario de destino.");
+                            return;
+                        }
+                        const r = await fetch(`${API_URL}/api/mascotas/${mascotaId}/usuario`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "x-admin-password": claveAdminActual
+                            },
+                            body: JSON.stringify({ usuario_id: Number(nuevoUsuarioId) })
+                        });
+                        const d = await r.json();
+                        if (!r.ok) {
+                            alert("Error: " + (d.error || "No se pudo reasignar"));
+                            return;
+                        }
+                        alert("Mascota reasignada correctamente.");
+                        await cargarDatosAdmin();
+                    });
+
+                    btnBorrar.addEventListener("click", async () => {
+                        const confirmar = confirm(`¿Seguro que quieres borrar la mascota ID ${mascotaId}?`);
+                        if (!confirmar) return;
+                        const r = await fetch(`${API_URL}/api/mascotas/${mascotaId}`, {
+                            method: "DELETE",
+                            headers: { "x-admin-password": claveAdminActual }
+                        });
+                        const d = await r.json();
+                        if (!r.ok) {
+                            alert("Error: " + (d.error || "No se pudo borrar"));
+                            return;
+                        }
+                        alert("Mascota eliminada.");
+                        await cargarDatosAdmin();
+                    });
+                });
+            }
+        }
+
+        document.getElementById("form-admin-pass").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            claveAdminActual = document.getElementById("adminPasswordInput").value;
+            try {
+                await cargarDatosAdmin();
+                document.getElementById("acceso-admin").style.display = "none";
+                document.getElementById("panel-admin").style.display = "flex";
+            } catch (err) {
+                claveAdminActual = "";
+                alert("Error: " + err.message);
+            }
+        });
+
+        document.getElementById("btn-refrescar-admin").addEventListener("click", () => {
+            cargarDatosAdmin().catch((err) => alert(err.message));
+        });
+
+        document.getElementById("btn-bloquear-admin").addEventListener("click", () => {
+            claveAdminActual = "";
+            document.getElementById("adminPasswordInput").value = "";
+            document.getElementById("panel-admin").style.display = "none";
+            document.getElementById("acceso-admin").style.display = "flex";
+        });
+    </script>
+</body>
+</html>
