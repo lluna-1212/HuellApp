@@ -26,6 +26,9 @@
         <p style="text-align: center; margin-top: 15px; font-size: 0.9rem;">
             ¿No tienes cuenta? <a href="registro.html" style="color: #0d9488; text-decoration: none;">Registrarse</a>
         </p>
+        <p style="text-align: center; margin-top: 8px; font-size: 0.85rem;">
+            <a href="admin.html" style="color: #64748b; text-decoration: none;">Acceso administración</a>
+        </p>
     </div>
 
     <script>
@@ -52,7 +55,15 @@
                 if (respuesta.ok && resultado.usuario) {
                     localStorage.setItem('usuario', JSON.stringify(resultado.usuario));
                     alert('¡Bienvenido/a, ' + resultado.usuario.nombre + '!');
-                    window.location.href = 'dashboard.html';
+
+                    const rol = (resultado.usuario.rol || '').toUpperCase();
+                    if (rol === 'ADMIN') {
+                        window.location.href = 'admin.html';
+                    } else if (rol === 'VETERINARIO') {
+                        window.location.href = 'vete.html';
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
                 } else {
                     alert('Error: ' + (resultado.error || 'No se pudo iniciar sesión'));
                 }

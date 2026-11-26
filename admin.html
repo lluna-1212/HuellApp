@@ -5,6 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HuellApp - Panel de Administración</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .usuario-acordeon {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .usuario-acordeon summary {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            list-style: none;
+            font-weight: 600;
+        }
+        .usuario-acordeon summary::-webkit-details-marker {
+            display: none;
+        }
+        .usuario-meta {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 400;
+        }
+        .mascotas-desplegable {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .fila-mascota-admin {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .acciones-mascota-admin {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+    </style>
 </head>
 <body>
 
@@ -36,7 +87,7 @@
             </div>
 
             <nav class="menu-lateral">
-                <a href="#resumen" class="item-menu activo">🛡️ Gestión General</a>
+                <a href="#resumen" class="item-menu activo">🛡️ Usuarios y Mascotas</a>
                 <a href="dashboard.html" class="item-menu">🐶 Vista Usuario</a>
             </nav>
 
@@ -57,31 +108,34 @@
                         <span class="nombre-usuario">Administrador</span>
                         <span class="rol-usuario">ADMIN</span>
                     </div>
-                    <button type="button" class="btn-cerrar-sesion" id="btn-bloquear-admin">Bloquear</button>
+                    <button type="button" class="btn-cerrar-sesion" id="btn-cerrar-sesion-admin">Cerrar sesión</button>
                 </div>
             </header>
 
             <main class="area-trabajo" id="resumen">
                 <div class="cabecera-seccion">
                     <div>
-                        <h1>Usuarios y Mascotas</h1>
-                        <p class="subtitulo">Reasigna mascotas a otro usuario o elimina registros</p>
+                        <h1>Usuarios y sus Mascotas</h1>
+                        <p class="subtitulo">Haz clic en un usuario para desplegar sus mascotas, reasignarlas o borrarlas</p>
                     </div>
                     <button type="button" class="btn-anadir" id="btn-refrescar-admin">Actualizar datos</button>
                 </div>
 
-                <div style="margin-bottom: 24px;">
-                    <p><strong>Total usuarios:</strong> <span id="total-usuarios">0</span> · <strong>Total mascotas:</strong> <span id="total-mascotas">0</span></p>
+                <div style="margin-bottom: 20px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+                    <p style="margin: 0;">
+                        <strong>Total usuarios:</strong> <span id="total-usuarios">0</span> ·
+                        <strong>Total mascotas:</strong> <span id="total-mascotas">0</span>
+                    </p>
+                    <input type="search" id="buscador-admin" placeholder="Buscar por usuario, email o mascota..." style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; min-width: 260px;">
                 </div>
 
-                <h2>Usuarios registrados</h2>
-                <div id="tabla-usuarios" style="margin-bottom: 32px;">
-                    <p>Cargando usuarios...</p>
+                <div id="lista-usuarios-acordeon">
+                    <p>Cargando datos...</p>
                 </div>
 
-                <h2>Todas las mascotas</h2>
-                <div id="lista-admin-mascotas">
-                    <p>Cargando mascotas...</p>
+                <div id="bloque-sin-dueno" style="margin-top: 28px; display: none;">
+                    <h2>Mascotas sin dueño asignado</h2>
+                    <div id="lista-sin-dueno"></div>
                 </div>
             </main>
         </div>
@@ -90,12 +144,146 @@
     <script>
         const API_URL = "https://huellapp-api.onrender.com";
         let claveAdminActual = "";
+        let cacheUsuarios = [];
+        let cacheMascotas = [];
 
         function obtenerEmoji(especie = "") {
             const esp = especie.toLowerCase();
             if (esp.includes("perro")) return "🐶";
             if (esp.includes("gato")) return "🐱";
             return "🐾";
+        }
+
+        function renderizarFilaMascota(m, opcionesUsuario) {
+            return `
+                <div class="fila-mascota-admin" data-mascota-id="${m.id}">
+                    <div>
+                        <strong>${obtenerEmoji(m.especie)} ${m.nombre}</strong>
+                        <span class="badge-id" style="margin-left: 6px;">ID: ${m.id}</span>
+                        <div class="usuario-meta">${m.especie || "Mascota"} • ${m.raza || "Sin raza"} · Chip: ${m.nif_chip || "N/A"}</div>
+                    </div>
+                    <div class="acciones-mascota-admin">
+                        <select class="select-nuevo-dueno" data-mascota-id="${m.id}">
+                            <option value="">Mover a usuario...</option>
+                            ${opcionesUsuario}
+                        </select>
+                        <button type="button" class="btn-secundario btn-reasignar" data-mascota-id="${m.id}">Reasignar</button>
+                        <button type="button" class="btn-cerrar-sesion btn-borrar-mascota" data-mascota-id="${m.id}">Borrar</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function pintarVistaAdmin(filtro = "") {
+            const texto = filtro.trim().toLowerCase();
+            const contenedor = document.getElementById("lista-usuarios-acordeon");
+            const bloqueSinDueno = document.getElementById("bloque-sin-dueno");
+            const listaSinDueno = document.getElementById("lista-sin-dueno");
+
+            const opcionesUsuario = cacheUsuarios.map((u) =>
+                `<option value="${u.id}">ID ${u.id} - ${u.nombre} (${u.email})</option>`
+            ).join("");
+
+            const usuariosFiltrados = cacheUsuarios.filter((u) => {
+                if (!texto) return true;
+                const mascotasDelUsuario = cacheMascotas.filter((m) => String(m.usuario_id) === String(u.id));
+                const coincideUsuario =
+                    `${u.nombre} ${u.apellidos || ""} ${u.email} ${u.id}`.toLowerCase().includes(texto);
+                const coincideMascota = mascotasDelUsuario.some((m) =>
+                    `${m.nombre} ${m.especie || ""} ${m.raza || ""} ${m.nif_chip || ""}`.toLowerCase().includes(texto)
+                );
+                return coincideUsuario || coincideMascota;
+            });
+
+            if (usuariosFiltrados.length === 0) {
+                contenedor.innerHTML = "<p>No hay usuarios que coincidan con la búsqueda.</p>";
+            } else {
+                contenedor.innerHTML = usuariosFiltrados.map((u) => {
+                    const susMascotas = cacheMascotas.filter((m) => String(m.usuario_id) === String(u.id));
+                    const abrirPorFiltro = texto.length > 0 && susMascotas.length > 0 ? "open" : "";
+
+                    const contenidoMascotas = susMascotas.length === 0
+                        ? `<p class="usuario-meta" style="margin: 0;">Este usuario aún no tiene mascotas registradas.</p>`
+                        : susMascotas.map((m) => renderizarFilaMascota(m, opcionesUsuario)).join("");
+
+                    return `
+                        <details class="usuario-acordeon" ${abrirPorFiltro}>
+                            <summary>
+                                <div>
+                                    <span>👤 ${u.nombre} ${u.apellidos || ""}</span>
+                                    <span class="badge-id" style="margin-left: 8px;">ID: ${u.id}</span>
+                                    <div class="usuario-meta">${u.email} · Tel: ${u.telefono || "N/A"} · Rol: ${u.rol || "USER"}</div>
+                                </div>
+                                <span class="estado-activo">${susMascotas.length} ${susMascotas.length === 1 ? "mascota" : "mascotas"} ▾</span>
+                            </summary>
+                            <div class="mascotas-desplegable">
+                                ${contenidoMascotas}
+                            </div>
+                        </details>
+                    `;
+                }).join("");
+            }
+
+            // Mascotas huérfanas (si existiera alguna sin usuario_id válido)
+            const idsUsuarios = new Set(cacheUsuarios.map((u) => String(u.id)));
+            const sinDueno = cacheMascotas.filter((m) => !m.usuario_id || !idsUsuarios.has(String(m.usuario_id)));
+            if (sinDueno.length > 0) {
+                bloqueSinDueno.style.display = "block";
+                listaSinDueno.innerHTML = sinDueno.map((m) => renderizarFilaMascota(m, opcionesUsuario)).join("");
+            } else {
+                bloqueSinDueno.style.display = "none";
+            }
+
+            // Conectar selects y botones de reasignar / borrar
+            document.querySelectorAll(".fila-mascota-admin").forEach((fila) => {
+                const mascotaId = fila.dataset.mascotaId;
+                const select = fila.querySelector(".select-nuevo-dueno");
+                const btnReasignar = fila.querySelector(".btn-reasignar");
+                const btnBorrar = fila.querySelector(".btn-borrar-mascota");
+
+                const mascotaObj = cacheMascotas.find((item) => String(item.id) === String(mascotaId));
+                if (mascotaObj && mascotaObj.usuario_id) {
+                    select.value = String(mascotaObj.usuario_id);
+                }
+
+                btnReasignar.addEventListener("click", async () => {
+                    const nuevoUsuarioId = select.value;
+                    if (!nuevoUsuarioId) {
+                        alert("Selecciona un usuario de destino.");
+                        return;
+                    }
+                    const r = await fetch(`${API_URL}/api/mascotas/${mascotaId}/usuario`, {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-admin-password": claveAdminActual
+                        },
+                        body: JSON.stringify({ usuario_id: Number(nuevoUsuarioId) })
+                    });
+                    const d = await r.json();
+                    if (!r.ok) {
+                        alert("Error: " + (d.error || "No se pudo reasignar"));
+                        return;
+                    }
+                    alert("Mascota reasignada correctamente.");
+                    await cargarDatosAdmin();
+                });
+
+                btnBorrar.addEventListener("click", async () => {
+                    if (!confirm(`¿Seguro que quieres borrar la mascota ID ${mascotaId}?`)) return;
+                    const r = await fetch(`${API_URL}/api/mascotas/${mascotaId}`, {
+                        method: "DELETE",
+                        headers: { "x-admin-password": claveAdminActual }
+                    });
+                    const d = await r.json();
+                    if (!r.ok) {
+                        alert("Error: " + (d.error || "No se pudo borrar"));
+                        return;
+                    }
+                    alert("Mascota eliminada.");
+                    await cargarDatosAdmin();
+                });
+            });
         }
 
         async function cargarDatosAdmin() {
@@ -108,99 +296,13 @@
                 throw new Error(data.error || "No autorizado");
             }
 
-            const usuarios = data.usuarios || [];
-            const mascotas = data.mascotas || [];
+            cacheUsuarios = data.usuarios || [];
+            cacheMascotas = data.mascotas || [];
 
-            document.getElementById("total-usuarios").textContent = usuarios.length;
-            document.getElementById("total-mascotas").textContent = mascotas.length;
+            document.getElementById("total-usuarios").textContent = cacheUsuarios.length;
+            document.getElementById("total-mascotas").textContent = cacheMascotas.length;
 
-            document.getElementById("tabla-usuarios").innerHTML = usuarios.length === 0
-                ? "<p>No hay usuarios registrados.</p>"
-                : usuarios.map((u) => `
-                    <div class="tarjeta-mascota" style="margin-bottom: 10px;">
-                        <strong>ID ${u.id}:</strong> ${u.nombre} ${u.apellidos || ""} (${u.email}) — <span>${u.rol || "USER"}</span>
-                    </div>
-                `).join("");
-
-            const opcionesUsuario = usuarios.map((u) =>
-                `<option value="${u.id}">ID ${u.id} - ${u.nombre} (${u.email})</option>`
-            ).join("");
-
-            document.getElementById("lista-admin-mascotas").innerHTML = mascotas.length === 0
-                ? "<p>No hay mascotas registradas.</p>"
-                : mascotas.map((m) => `
-                    <div class="tarjeta-mascota" style="margin-bottom: 12px;">
-                        <div class="tarjeta-header">
-                            <span class="badge-id">ID Mascota: ${m.id}</span>
-                            <span class="estado-activo">Dueño ID: ${m.usuario_id ?? "Sin asignar"}</span>
-                        </div>
-                        <h3>${obtenerEmoji(m.especie)} ${m.nombre}</h3>
-                        <p class="raza">${m.especie || "Mascota"} • ${m.raza || "Sin raza"} · Dueño actual: ${m.dueno_nombre || "N/A"}</p>
-
-                        <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                            <select class="select-nuevo-dueno" data-mascota-id="${m.id}">
-                                <option value="">Cambiar a usuario...</option>
-                                ${opcionesUsuario}
-                            </select>
-                            <button type="button" class="btn-secundario btn-reasignar" data-mascota-id="${m.id}">Reasignar</button>
-                            <button type="button" class="btn-cerrar-sesion btn-borrar-mascota" data-mascota-id="${m.id}">Borrar</button>
-                        </div>
-                    </div>
-                `).join("");
-
-            if (document.querySelector(".select-nuevo-dueno")) {
-                document.querySelectorAll(".tarjeta-mascota").forEach((card) => {
-                    const select = card.querySelector(".select-nuevo-dueno");
-                    const btnReasignar = card.querySelector(".btn-reasignar");
-                    const btnBorrar = card.querySelector(".btn-borrar-mascota");
-                    if (!select || !btnReasignar || !btnBorrar) return;
-
-                    const mascotaId = btnReasignar.dataset.mascotaId;
-                    const mascotaObj = mascotas.find((item) => String(item.id) === String(mascotaId));
-                    if (mascotaObj && mascotaObj.usuario_id) {
-                        select.value = String(mascotaObj.usuario_id);
-                    }
-
-                    btnReasignar.addEventListener("click", async () => {
-                        const nuevoUsuarioId = select.value;
-                        if (!nuevoUsuarioId) {
-                            alert("Selecciona un usuario de destino.");
-                            return;
-                        }
-                        const r = await fetch(`${API_URL}/api/mascotas/${mascotaId}/usuario`, {
-                            method: "PATCH",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "x-admin-password": claveAdminActual
-                            },
-                            body: JSON.stringify({ usuario_id: Number(nuevoUsuarioId) })
-                        });
-                        const d = await r.json();
-                        if (!r.ok) {
-                            alert("Error: " + (d.error || "No se pudo reasignar"));
-                            return;
-                        }
-                        alert("Mascota reasignada correctamente.");
-                        await cargarDatosAdmin();
-                    });
-
-                    btnBorrar.addEventListener("click", async () => {
-                        const confirmar = confirm(`¿Seguro que quieres borrar la mascota ID ${mascotaId}?`);
-                        if (!confirmar) return;
-                        const r = await fetch(`${API_URL}/api/mascotas/${mascotaId}`, {
-                            method: "DELETE",
-                            headers: { "x-admin-password": claveAdminActual }
-                        });
-                        const d = await r.json();
-                        if (!r.ok) {
-                            alert("Error: " + (d.error || "No se pudo borrar"));
-                            return;
-                        }
-                        alert("Mascota eliminada.");
-                        await cargarDatosAdmin();
-                    });
-                });
-            }
+            pintarVistaAdmin(document.getElementById("buscador-admin").value);
         }
 
         document.getElementById("form-admin-pass").addEventListener("submit", async (e) => {
@@ -216,15 +318,19 @@
             }
         });
 
+        document.getElementById("buscador-admin").addEventListener("input", (e) => {
+            pintarVistaAdmin(e.target.value);
+        });
+
         document.getElementById("btn-refrescar-admin").addEventListener("click", () => {
             cargarDatosAdmin().catch((err) => alert(err.message));
         });
 
-        document.getElementById("btn-bloquear-admin").addEventListener("click", () => {
+        document.getElementById("btn-cerrar-sesion-admin").addEventListener("click", () => {
             claveAdminActual = "";
-            document.getElementById("adminPasswordInput").value = "";
-            document.getElementById("panel-admin").style.display = "none";
-            document.getElementById("acceso-admin").style.display = "flex";
+            localStorage.removeItem("usuario");
+            localStorage.removeItem("adminAutenticado");
+            window.location.href = "login.html";
         });
     </script>
 </body>
