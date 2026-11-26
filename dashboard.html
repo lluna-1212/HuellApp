@@ -17,8 +17,8 @@
             </div>
 
             <nav class="menu-lateral">
-                <a href="#" class="item-menu activo">🐶 Mis Mascotas</a>
-                <a href="#" class="item-menu">📅 Citas Médicas</a>
+                <a href="dashboard.html" class="item-menu activo">🐶 Mis Mascotas</a>
+                <a href="#" class="item-menu">📅 Próximos Eventos</a>
                 <a href="#" class="item-menu">💉 Cartilla Vacunas</a>
                 <a href="#" class="item-menu">⚙️ Configuración</a>
             </nav>
@@ -40,7 +40,6 @@
                 <div class="perfil-usuario">
                     <div class="avatar-usuario" id="inicial-usuario">U</div>
                     <div class="info-usuario">
-                        <!-- Aquí se cargará el nombre dinámicamente -->
                         <span class="nombre-usuario" id="nombre-mostrar">Cargando...</span>
                         <span class="rol-usuario" id="rol-mostrar">Dueño</span>
                     </div>
@@ -59,56 +58,14 @@
                 </div>
 
                 <div class="grid-mascotas" id="grid-mascotas">
-                    <div class="tarjeta-mascota"
-                         data-id="PET-4592"
-                         data-nombre="Toby"
-                         data-tipo="Perro"
-                         data-raza="Golden Retriever"
-                         data-edad="3 años"
-                         data-peso="29 kg"
-                         data-vacunas="Al día"
-                         data-notas="Muy sociable y activo en paseos.">
-                        <div class="tarjeta-header">
-                            <span class="badge-id">ID: PET-4592</span>
-                            <span class="estado-activo">Activo</span>
-                        </div>
-                        <div class="mascota-avatar">🐶</div>
-                        <h3>Toby</h3>
-                        <p class="raza">Perro • Golden Retriever</p>
-                        <div class="tarjeta-acciones">
-                            <button type="button" class="btn-secundario">Ver ficha</button>
-                            <button type="button" class="btn-secundario">Historial</button>
-                        </div>
-                    </div>
-
-                    <div class="tarjeta-mascota"
-                         data-id="PET-1024"
-                         data-nombre="Luna"
-                         data-tipo="Gato"
-                         data-raza="Siamés"
-                         data-edad="2 años"
-                         data-peso="4,2 kg"
-                         data-vacunas="Revisión próxima"
-                         data-notas="Tranquila en casa, algo tímida en clínica.">
-                        <div class="tarjeta-header">
-                            <span class="badge-id">ID: PET-1024</span>
-                            <span class="estado-activo">Activo</span>
-                        </div>
-                        <div class="mascota-avatar">🐱</div>
-                        <h3>Luna</h3>
-                        <p class="raza">Gato • Siamés</p>
-                        <div class="tarjeta-acciones">
-                            <button type="button" class="btn-secundario">Ver ficha</button>
-                            <button type="button" class="btn-secundario">Historial</button>
-                        </div>
-                    </div>
+                    <p>Cargando mascotas...</p>
                 </div>
             </main>
 
         </div>
     </div>
 
-    <!-- FICHA AMPLIADA AL HACER CLIC -->
+    <!-- FICHA RÁPIDA AL HACER CLIC -->
     <div class="modal-overlay" id="modal-ficha" aria-hidden="true">
         <div class="modal-ficha">
             <button type="button" class="modal-cerrar" id="cerrar-modal" aria-label="Cerrar">&times;</button>
@@ -123,46 +80,80 @@
             </div>
 
             <div class="ficha-datos">
-                <p><strong>Edad:</strong> <span id="ficha-edad">-</span></p>
+                <p><strong>Género:</strong> <span id="ficha-genero">-</span></p>
+                <p><strong>NIF / Chip:</strong> <span id="ficha-chip">-</span></p>
                 <p><strong>Peso:</strong> <span id="ficha-peso">-</span></p>
-                <p><strong>Vacunas:</strong> <span id="ficha-vacunas">-</span></p>
-                <p><strong>Notas:</strong> <span id="ficha-notas">-</span></p>
+                <p><strong>Datos relevantes:</strong> <span id="ficha-notas">-</span></p>
+            </div>
+
+            <div class="tarjeta-acciones" style="margin-top: 16px;">
+                <a href="#" id="btn-perfil-detallado" class="btn-secundario">Ver perfil detallado</a>
             </div>
         </div>
     </div>
 
-    <!--PODER VISUALIZAR EL NOMBRE DEL USUARIO-->
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const guardado = localStorage.getItem("usuarioActual");
-            if (guardado) {
-                const usuario = JSON.parse(guardado);
-                const nombre = usuario.nombre || "Usuario";
-                const rol = usuario.rol || "Dueño";
-                document.getElementById("nombre-mostrar").textContent = `Hola, ${nombre}`;
-                document.getElementById("rol-mostrar").textContent = rol;
-                document.getElementById("inicial-usuario").textContent = nombre.charAt(0).toUpperCase();
+        const API_URL = "https://huellapp-api.onrender.com";
+
+        function obtenerEmoji(especie = "") {
+            const esp = especie.toLowerCase();
+            if (esp.includes("perro")) return "🐶";
+            if (esp.includes("gato")) return "🐱";
+            return "🐾";
+        }
+
+        function calcularEdad(fechaNac) {
+            if (!fechaNac) return "Sin fecha";
+            const nacimiento = new Date(fechaNac);
+            if (Number.isNaN(nacimiento.getTime())) return "Sin fecha";
+            const hoy = new Date();
+            let anios = hoy.getFullYear() - nacimiento.getFullYear();
+            const m = hoy.getMonth() - nacimiento.getMonth();
+            if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+                anios--;
             }
+            return anios <= 0 ? "< 1 año" : `${anios} ${anios === 1 ? "año" : "años"}`;
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const guardado = localStorage.getItem("usuario");
+            if (!guardado) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            const usuario = JSON.parse(guardado);
+            const nombre = usuario.nombre || "Usuario";
+            const rol = usuario.rol || "Dueño";
+
+            document.getElementById("nombre-mostrar").textContent = `Hola, ${nombre}`;
+            document.getElementById("rol-mostrar").textContent = rol;
+            document.getElementById("inicial-usuario").textContent = nombre.charAt(0).toUpperCase();
+
+            document.getElementById("btn-cerrar-sesion").addEventListener("click", () => {
+                localStorage.removeItem("usuario");
+                window.location.href = "login.html";
+            });
 
             const modal = document.getElementById("modal-ficha");
             const btnCerrar = document.getElementById("cerrar-modal");
+            const grid = document.getElementById("grid-mascotas");
 
-            document.querySelectorAll(".tarjeta-mascota").forEach((tarjeta) => {
-                tarjeta.addEventListener("click", () => {
-                    const d = tarjeta.dataset;
-                    document.getElementById("ficha-avatar").textContent = tarjeta.querySelector(".mascota-avatar").textContent;
-                    document.getElementById("ficha-id").textContent = `ID: ${d.id}`;
-                    document.getElementById("ficha-nombre").textContent = d.nombre;
-                    document.getElementById("ficha-subtitulo").textContent = `${d.tipo} • ${d.raza}`;
-                    document.getElementById("ficha-edad").textContent = d.edad;
-                    document.getElementById("ficha-peso").textContent = d.peso;
-                    document.getElementById("ficha-vacunas").textContent = d.vacunas;
-                    document.getElementById("ficha-notas").textContent = d.notas;
+            function abrirFicha(mascota) {
+                const emoji = obtenerEmoji(mascota.especie);
+                document.getElementById("ficha-avatar").textContent = emoji;
+                document.getElementById("ficha-id").textContent = `ID: ${mascota.id}`;
+                document.getElementById("ficha-nombre").textContent = mascota.nombre || "Sin nombre";
+                document.getElementById("ficha-subtitulo").textContent = `${mascota.especie || "Mascota"} • ${mascota.raza || "Sin raza"} (${calcularEdad(mascota.fecha_nac)})`;
+                document.getElementById("ficha-genero").textContent = mascota.genero || "No especificado";
+                document.getElementById("ficha-chip").textContent = mascota.nif_chip || "No registrado";
+                document.getElementById("ficha-peso").textContent = mascota.peso ? `${mascota.peso} kg` : "No registrado";
+                document.getElementById("ficha-notas").textContent = mascota.datos_relevantes || "Sin notas adicionales.";
+                document.getElementById("btn-perfil-detallado").href = `historial.html?id=${mascota.id}`;
 
-                    modal.classList.add("activo");
-                    modal.setAttribute("aria-hidden", "false");
-                });
-            });
+                modal.classList.add("activo");
+                modal.setAttribute("aria-hidden", "false");
+            }
 
             function cerrarFicha() {
                 modal.classList.remove("activo");
@@ -177,12 +168,52 @@
                 if (e.key === "Escape" && modal.classList.contains("activo")) cerrarFicha();
             });
 
-            document.getElementById("btn-cerrar-sesion").addEventListener("click", () => {
-                localStorage.removeItem("usuarioActual");
-                window.location.href = "login.html";
-            });
+            try {
+                const res = await fetch(`${API_URL}/api/mascotas?usuario_id=${usuario.id}`);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    grid.innerHTML = `<p>Error al cargar mascotas: ${data.error || "Error desconocido"}</p>`;
+                    return;
+                }
+
+                const mascotas = data.mascotas || [];
+                if (mascotas.length === 0) {
+                    grid.innerHTML = `<p>Todavía no tienes mascotas registradas. ¡Añade la primera con el botón de arriba!</p>`;
+                    return;
+                }
+
+                grid.innerHTML = "";
+                mascotas.forEach((mascota) => {
+                    const tarjeta = document.createElement("div");
+                    tarjeta.className = "tarjeta-mascota";
+                    tarjeta.innerHTML = `
+                        <div class="tarjeta-header">
+                            <span class="badge-id">ID: ${mascota.id}</span>
+                            <span class="estado-activo">Activo</span>
+                        </div>
+                        <div class="mascota-avatar">${obtenerEmoji(mascota.especie)}</div>
+                        <h3>${mascota.nombre}</h3>
+                        <p class="raza">${mascota.especie || "Mascota"} • ${mascota.raza || "Sin raza"}</p>
+                        <div class="tarjeta-acciones">
+                            <button type="button" class="btn-secundario btn-ver-ficha">Ver ficha</button>
+                            <a href="historial.html?id=${mascota.id}" class="btn-secundario">Historial</a>
+                        </div>
+                    `;
+
+                    tarjeta.addEventListener("click", () => abrirFicha(mascota));
+                    tarjeta.querySelector(".btn-ver-ficha").addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        abrirFicha(mascota);
+                    });
+
+                    grid.appendChild(tarjeta);
+                });
+            } catch (error) {
+                console.error("Error cargando mascotas:", error);
+                grid.innerHTML = `<p>No se pudieron cargar las mascotas desde el servidor.</p>`;
+            }
         });
     </script>
-
 </body>
 </html>

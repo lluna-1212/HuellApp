@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Prueba de conexión
+//== PRUEBA DE CONEXIÓN ==
 app.get('/api/test', async (req, res) => {
     try {
         const resultado = await pool.query('SELECT NOW() AS hora_neon');
@@ -18,7 +18,7 @@ app.get('/api/test', async (req, res) => {
     }
 });
 
-// === NUEVA RUTA DE REGISTRO ===
+// === RUTA DE REGISTRO ===
 app.post('/api/registro', async (req, res) => {
     const { dni, nombre, apellidos, telefono, email, password, rol } = req.body;
 
@@ -40,8 +40,8 @@ app.post('/api/registro', async (req, res) => {
         res.status(500).json({ error: 'Error al guardar en la base de datos' });
     }
 });
-// ==============================
-//RUTA LOGIN========
+
+//== RUTA LOGIN ==
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -73,11 +73,81 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// == RUTA OBTENER MASCOTAS DE UN USUARIO ==
+app.get('/api/mascotas', async (req, res) => {
+    const { usuario_id } = req.query;
+
+    if (!usuario_id) {
+        return res.status(400).json({ error: 'Falta el usuario_id' });
+    }
+
+    try {
+        const resultado = await pool.query(
+            'SELECT * FROM mascotas WHERE usuario_id = $1 ORDER BY id DESC',
+            [usuario_id]
+        );
+        res.json({ mascotas: resultado.rows });
+    } catch (error) {
+        console.error("🚨 ERROR AL OBTENER MASCOTAS:", error);
+        res.status(500).json({ error: 'Error al cargar las mascotas' });
+    }
+});
+
+// OBTENER UNA MASCOTA POR ID (PARA PERFIL DETALLADO / HISTORIAL)
+app.get('/api/mascotas/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const resultado = await pool.query(
+            'SELECT * FROM mascotas WHERE id = $1',
+            [id]
+        );
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ error: 'Mascota no encontrada' });
+        }
+        res.json({ mascota: resultado.rows[0] });
+    } catch (error) {
+        console.error("🚨 ERROR AL OBTENER MASCOTA:", error);
+        res.status(500).json({ error: 'Error al cargar la mascota' });
+    }
+});
+
+// == ACTUALIZAR DATOS DE LA CUENTA DEL DUEÑO ==
+app.put('/api/usuarios/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nombre, apellidos, telefono, email } = req.body;
+
+    try {
+        const actualizado = await pool.query(
+            `UPDATE users
+             SET nombre = $1, apellidos = $2, telefono = $3, email = $4
+             WHERE id = $5
+             RETURNING id, nombre, apellidos, telefono, email, rol`,
+            [nombre, apellidos, telefono, email, id]
+        );
+
+        if (actualizado.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        res.json({
+            mensaje: 'Datos actualizados correctamente',
+            usuario: actualizado.rows[0]
+        });
+    } catch (error) {
+        console.error("🚨 ERROR AL ACTUALIZAR USUARIO:", error);
+        if (error.code === '23505') {
+            return res.status(400).json({ error: 'Ese correo ya está en uso por otra cuenta' });
+        }
+        res.status(500).json({ error: 'Error al actualizar el perfil' });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en puerto ${PORT}`);
 });
-// RUTA REGISTRO NUEVA MASCOTAS
+// == RUTA REGISTRO NUEVA MASCOTAS ==
 app.post('/api/mascotas', async (req, res) => {
     const {
         nombre,

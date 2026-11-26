@@ -3,37 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HuellaApp -Acceso-</title>
+    <title>HuellaApp - Acceso</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="pantalla-centrada">
     <div class="contenedor-login">
         <div class="cabecera">
             <h1>HuellAPP 🐾</h1>
-            <p>Tú mascota y su salud SIEMPRE CONTIGO</p>
+            <p>Tu mascota y su salud SIEMPRE CONTIGO</p>
         </div>
         <form id="form-login">
-            <div class=" grupo-input">
-                <label>Correo Electrónico</label>
-                <input type="email" id="emailInput" placeholder="tuemail@.com" required>
+            <div class="grupo-input">
+                <label for="emailInput">Correo Electrónico</label>
+                <input type="email" id="emailInput" placeholder="tuemail@ejemplo.com" required>
             </div>
             <div class="grupo-input">
-                <label>Contraseña</label>
+                <label for="passwordInput">Contraseña</label>
                 <input type="password" id="passwordInput" placeholder="·······" required>
             </div>
             <button type="submit" class="btn-principal">Entrar</button>
         </form>
         <p style="text-align: center; margin-top: 15px; font-size: 0.9rem;">
-                ¿No tienes cuenta? <a href="registro.html" style="color: #0d9488; text-decoration: none;">Registrarse</a>
-            </p>
+            ¿No tienes cuenta? <a href="registro.html" style="color: #0d9488; text-decoration: none;">Registrarse</a>
+        </p>
     </div>
+
     <script>
         const form = document.getElementById('form-login');
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const datos = {
-                email: document.getElementById('emailInput').value,
+                email: document.getElementById('emailInput').value.trim(),
                 password: document.getElementById('passwordInput').value
             };
 
@@ -48,21 +49,18 @@
 
                 const resultado = await respuesta.json();
 
-                if (respuesta.ok) {
-                    // Guardamos los datos del usuario para usarlos en el resto de páginas
+                if (respuesta.ok && resultado.usuario) {
                     localStorage.setItem('usuario', JSON.stringify(resultado.usuario));
                     alert('¡Bienvenido/a, ' + resultado.usuario.nombre + '!');
-                    window.location.href = 'dashboard.html'; // Cambia esto si tu página principal tiene otro nombre
+                    window.location.href = 'dashboard.html';
                 } else {
-                    alert('Error: ' + resultado.error);
+                    alert('Error: ' + (resultado.error || 'No se pudo iniciar sesión'));
                 }
             } catch (error) {
                 console.error('Error de conexión:', error);
                 alert('No se pudo conectar con el servidor.');
             }
         });
-
     </script>
-    
 </body>
 </html>
