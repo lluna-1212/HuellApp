@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Prueba de conexión
+//== PRUEBA DE CONEXIÓN ==
 app.get('/api/test', async (req, res) => {
     try {
         const resultado = await pool.query('SELECT NOW() AS hora_neon');
@@ -18,7 +18,7 @@ app.get('/api/test', async (req, res) => {
     }
 });
 
-// === NUEVA RUTA DE REGISTRO ===
+// === RUTA DE REGISTRO ===
 app.post('/api/registro', async (req, res) => {
     const { dni, nombre, apellidos, telefono, email, password, rol } = req.body;
 
@@ -40,8 +40,8 @@ app.post('/api/registro', async (req, res) => {
         res.status(500).json({ error: 'Error al guardar en la base de datos' });
     }
 });
-// ==============================
-//RUTA LOGIN========
+
+//== RUTA LOGIN ==
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -73,7 +73,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// OBTENER MASCOTAS DE UN USUARIO
+// == RUTA OBTENER MASCOTAS DE UN USUARIO ==
 app.get('/api/mascotas', async (req, res) => {
     const { usuario_id } = req.query;
 
@@ -112,7 +112,7 @@ app.get('/api/mascotas/:id', async (req, res) => {
     }
 });
 
-// ACTUALIZAR DATOS DE LA CUENTA DEL DUEÑO
+// == ACTUALIZAR DATOS DE LA CUENTA DEL DUEÑO ==
 app.put('/api/usuarios/:id', async (req, res) => {
     const { id } = req.params;
     const { nombre, apellidos, telefono, email } = req.body;
@@ -147,7 +147,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en puerto ${PORT}`);
 });
-// RUTA REGISTRO NUEVA MASCOTAS
+// == RUTA REGISTRO NUEVA MASCOTAS ==
 app.post('/api/mascotas', async (req, res) => {
     const {
         nombre,
