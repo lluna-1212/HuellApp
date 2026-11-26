@@ -159,15 +159,24 @@
             const bloqueSinDueno = document.getElementById("bloque-sin-dueno");
             const listaSinDueno = document.getElementById("lista-sin-dueno");
 
-            const opcionesUsuario = cacheUsuarios.map((u) =>
+            const usuariosGestionables = cacheUsuarios.filter((u) => {
+                const rol = (u.rol || "USER").toUpperCase();
+                return rol === "USER" || rol === "VETERINARIO";
+            });
+
+            document.getElementById("total-usuarios").textContent = usuariosGestionables.length;
+
+            const opcionesUsuario = usuariosGestionables.map((u) =>
                 `<option value="${u.id}">ID ${u.id} - ${u.nombre} (${u.email})</option>`
             ).join("");
 
-            const usuariosFiltrados = cacheUsuarios.filter((u) => {
+            const usuariosFiltrados = usuariosGestionables.filter((u) => {
                 if (!texto) return true;
                 const mascotasDelUsuario = cacheMascotas.filter((m) => String(m.usuario_id) === String(u.id));
                 const coincideUsuario =
-                    `${u.nombre} ${u.apellidos || ""} ${u.email} ${u.id}`.toLowerCase().includes(texto);
+                    `${u.nombre} ${u.apellidos || ""} ${u.email} ${u.id} ${u.rol || ""} ${u.num_colegiado || ""}`
+                        .toLowerCase()
+                        .includes(texto);
                 const coincideMascota = mascotasDelUsuario.some((m) =>
                     `${m.nombre} ${m.especie || ""} ${m.raza || ""} ${m.nif_chip || ""}`.toLowerCase().includes(texto)
                 );
@@ -181,6 +190,11 @@
                     const susMascotas = cacheMascotas.filter((m) => String(m.usuario_id) === String(u.id));
                     const abrirPorFiltro = texto.length > 0 && susMascotas.length > 0 ? "open" : "";
 
+                    const rolUpper = (u.rol || "USER").toUpperCase();
+                    const etiquetaRol = rolUpper === "VETERINARIO"
+                        ? `VETERINARIO · Col. ${u.num_colegiado || "N/A"}`
+                        : "USER";
+
                     const contenidoMascotas = susMascotas.length === 0
                         ? `<p class="usuario-meta" style="margin: 0;">Este usuario aún no tiene mascotas registradas.</p>`
                         : susMascotas.map((m) => renderizarFilaMascota(m, opcionesUsuario)).join("");
@@ -189,9 +203,9 @@
                         <details class="usuario-acordeon" ${abrirPorFiltro}>
                             <summary>
                                 <div>
-                                    <span>👤 ${u.nombre} ${u.apellidos || ""}</span>
+                                    <span>${rolUpper === "VETERINARIO" ? "🩺" : "👤"} ${u.nombre} ${u.apellidos || ""}</span>
                                     <span class="badge-id" style="margin-left: 8px;">ID: ${u.id}</span>
-                                    <div class="usuario-meta">${u.email} · Tel: ${u.telefono || "N/A"} · Rol: ${u.rol || "USER"}</div>
+                                    <div class="usuario-meta">${u.email} · Tel: ${u.telefono || "N/A"} · Rol: ${etiquetaRol}</div>
                                 </div>
                                 <span class="estado-activo">${susMascotas.length} ${susMascotas.length === 1 ? "mascota" : "mascotas"} ▾</span>
                             </summary>
@@ -276,7 +290,6 @@
             cacheUsuarios = data.usuarios || [];
             cacheMascotas = data.mascotas || [];
 
-            document.getElementById("total-usuarios").textContent = cacheUsuarios.length;
             document.getElementById("total-mascotas").textContent = cacheMascotas.length;
 
             pintarVistaAdmin(document.getElementById("buscador-admin").value);
