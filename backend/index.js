@@ -278,3 +278,27 @@ app.post('/api/mascotas', async (req, res) => {
         res.status(500).json({ error: 'Error al guardar la mascota en la base de datos' });
     }
 });
+//=== VERIFICACIÓN DE ADMIN ===
+async function verificarAdmin(req, res, next) {
+    const adminId = req.headers['x-admin-id'];
+    if (!adminId) {
+        return res.status(401).json({ error: 'Falta identificación de administrador' });
+    }
+
+    try {
+        const result = await pool.query(
+            'SELECT id, rol FROM users WHERE id = $1',
+            [adminId]
+        );
+        const user = result.rows[0];
+
+        if (!user || (user.rol || '').toUpperCase() !== 'ADMIN') {
+            return res.status(403).json({ error: 'Acceso denegado: no tienes permisos de administrador' });
+        }
+
+        next();
+    } catch (error) {
+        console.error('Error verificando admin:', error);
+        res.status(500).json({ error: 'Error interno al verificar permisos' });
+    }
+}

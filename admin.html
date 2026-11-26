@@ -59,28 +59,7 @@
 </head>
 <body>
 
-    <!-- BLOQUEO DE ACCESO CON CONTRASEÑA DE ADMIN -->
-    <div class="pantalla-centrada" id="acceso-admin">
-        <div class="contenedor-login">
-            <div class="cabecera">
-                <h1>HuellApp Admin 🛡️</h1>
-                <p>Acceso restringido a administración</p>
-            </div>
-            <form id="form-admin-pass">
-                <div class="grupo-input">
-                    <label for="adminPasswordInput">Contraseña de administrador</label>
-                    <input type="password" id="adminPasswordInput" placeholder="Introduce la clave admin" required>
-                </div>
-                <button type="submit" class="btn-principal">Desbloquear panel</button>
-            </form>
-            <p style="text-align: center; margin-top: 15px; font-size: 0.9rem;">
-                <a href="dashboard.html" style="color: #0d9488; text-decoration: none;">Volver al panel de usuario</a>
-            </p>
-        </div>
-    </div>
-
-    <!-- PANEL ADMIN DESBLOQUEADO -->
-    <div class="layout-dashboard" id="panel-admin" style="display: none;">
+    <div class="layout-dashboard" id="panel-admin" style="display: flex;">
         <aside class="sidebar">
             <div class="marca">
                 <h2>HuellApp Admin</h2>
@@ -103,9 +82,9 @@
                 </div>
 
                 <div class="perfil-usuario">
-                    <div class="avatar-usuario">A</div>
+                    <div class="avatar-usuario" id="avatar-admin">A</div>
                     <div class="info-usuario">
-                        <span class="nombre-usuario">Administrador</span>
+                        <span class="nombre-usuario" id="nombre-admin">Administrador</span>
                         <span class="rol-usuario">ADMIN</span>
                     </div>
                     <button type="button" class="btn-cerrar-sesion" id="btn-cerrar-sesion-admin">Cerrar sesión</button>
@@ -143,7 +122,7 @@
 
     <script>
         const API_URL = "https://huellapp-api.onrender.com";
-        let claveAdminActual = "";
+        let usuarioAdmin = null;
         let cacheUsuarios = [];
         let cacheMascotas = [];
 
@@ -224,7 +203,6 @@
                 }).join("");
             }
 
-            // Mascotas huérfanas (si existiera alguna sin usuario_id válido)
             const idsUsuarios = new Set(cacheUsuarios.map((u) => String(u.id)));
             const sinDueno = cacheMascotas.filter((m) => !m.usuario_id || !idsUsuarios.has(String(m.usuario_id)));
             if (sinDueno.length > 0) {
@@ -234,7 +212,6 @@
                 bloqueSinDueno.style.display = "none";
             }
 
-            // Conectar selects y botones de reasignar / borrar
             document.querySelectorAll(".fila-mascota-admin").forEach((fila) => {
                 const mascotaId = fila.dataset.mascotaId;
                 const select = fila.querySelector(".select-nuevo-dueno");
@@ -256,7 +233,7 @@
                         method: "PATCH",
                         headers: {
                             "Content-Type": "application/json",
-                            "x-admin-password": claveAdminActual
+                            "x-admin-id": String(usuarioAdmin.id)
                         },
                         body: JSON.stringify({ usuario_id: Number(nuevoUsuarioId) })
                     });
@@ -273,7 +250,7 @@
                     if (!confirm(`¿Seguro que quieres borrar la mascota ID ${mascotaId}?`)) return;
                     const r = await fetch(`${API_URL}/api/mascotas/${mascotaId}`, {
                         method: "DELETE",
-                        headers: { "x-admin-password": claveAdminActual }
+                        headers: { "x-admin-id": String(usuarioAdmin.id) }
                     });
                     const d = await r.json();
                     if (!r.ok) {
@@ -288,7 +265,7 @@
 
         async function cargarDatosAdmin() {
             const res = await fetch(`${API_URL}/api/admin/resumen`, {
-                headers: { "x-admin-password": claveAdminActual }
+                headers: { "x-admin-id": String(usuarioAdmin.id) }
             });
             const data = await res.json();
 
@@ -305,18 +282,27 @@
             pintarVistaAdmin(document.getElementById("buscador-admin").value);
         }
 
-        document.getElementById("form-admin-pass").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            claveAdminActual = document.getElementById("adminPasswordInput").value;
+        function inicializarAdmin() {
             try {
-                await cargarDatosAdmin();
-                document.getElementById("acceso-admin").style.display = "none";
-                document.getElementById("panel-admin").style.display = "flex";
-            } catch (err) {
-                claveAdminActual = "";
-                alert("Error: " + err.message);
+                usuarioAdmin = JSON.parse(localStorage.getItem("usuario") || "null");
+            } catch {
+                usuarioAdmin = null;
             }
-        });
+
+            if (!usuarioAdmin || (usuarioAdmin.rol || "").toUpperCase() !== "ADMIN") {
+                window.location.href = "login.html";
+                return;
+            }
+
+            const nombreCompleto = `${usuarioAdmin.nombre || "Administrador"} ${usuarioAdmin.apellidos || ""}`.trim();
+            document.getElementById("nombre-admin").textContent = nombreCompleto;
+            document.getElementById("avatar-admin").textContent = (usuarioAdmin.nombre || "A").charAt(0).toUpperCase();
+
+            cargarDatosAdmin().catch((err) => {
+                alert("Error de acceso: " + err.message);
+                window.location.href = "login.html";
+            });
+        }
 
         document.getElementById("buscador-admin").addEventListener("input", (e) => {
             pintarVistaAdmin(e.target.value);
@@ -327,11 +313,12 @@
         });
 
         document.getElementById("btn-cerrar-sesion-admin").addEventListener("click", () => {
-            claveAdminActual = "";
             localStorage.removeItem("usuario");
             localStorage.removeItem("adminAutenticado");
             window.location.href = "login.html";
         });
+
+        inicializarAdmin();
     </script>
 </body>
 </html>
