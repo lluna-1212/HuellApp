@@ -532,3 +532,13 @@ body {
     transform: none;
     mix-blend-mode: multiply;
 }
+
+.contenedor-login .logo-nueva-mascota {
+    display: block;
+    width: 215px;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto 12px;
+    transform: none;
+    mix-blend-mode: multiply;
+}
