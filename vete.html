@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HuellApp - Consulta Veterinaria</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="img/logo_web.png">
+</head>
+<body>
+
+    <div class="layout-dashboard">
+        <aside class="sidebar">
+            <div class="marca">
+                <img src="./img/logo_web.png" alt="HuellApp" class="logo-sidebar">
+                <h2>HuellApp Vet</h2>
+            </div>
+            <nav class="menu-lateral">
+                <a href="#consulta" class="item-menu activo">🩺 Ficha de Mascotas</a>
+                <a href="dashboard.html" class="item-menu">🐶 Vista Usuario</a>
+            </nav>
+            <div class="sidebar-footer">
+                <p>HuellApp v1.0</p>
+            </div>
+        </aside>
+
+        <div class="contenido-principal">
+            <header class="topbar">
+                <div class="titulo-pagina">
+                    <span>Consulta Veterinaria</span>
+                </div>
+
+                <div class="perfil-usuario">
+                    <div class="avatar-usuario" id="avatar-vet">V</div>
+                    <div class="info-usuario">
+                        <span class="nombre-usuario" id="nombre-vet">Veterinario/a</span>
+                        <span class="rol-usuario" id="colegiado-vet">VETERINARIO</span>
+                    </div>
+                    <button type="button" class="btn-cerrar-sesion" id="btn-cerrar-sesion-vet">Cerrar sesión</button>
+                </div>
+            </header>
+
+            <main class="area-trabajo" id="consulta">
+                <div class="cabecera-seccion">
+                    <div>
+                        <h1>Historial y Ficha Clínica</h1>
+                        <p class="subtitulo">Busca un paciente para revisar o registrar datos clínicos</p>
+                    </div>
+                </div>
+
+                <div class="layout-clinico">
+                    <!-- BUSCADOR CON SUGERENCIAS -->
+                    <section class="panel-pacientes">
+                        <h2 style="margin-top: 0; font-size: 1.05rem;">Buscar paciente</h2>
+                        <div class="buscador-con-sugerencias">
+                            <input type="search" id="buscador-paciente" placeholder="Nombre, chip o dueño (mín. 2 letras)..." autocomplete="off" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box;">
+                            <div id="sugerencias-paciente" class="lista-sugerencias" style="display: none;"></div>
+                        </div>
+                        <p id="estado-busqueda" class="meta-suave" style="margin: 10px 0 0;">
+                            Búsqueda confidencial: escribe al menos 2 caracteres para consultar un paciente.
+                        </p>
+                    </section>
+
+                    <!-- FICHA DE LA MASCOTA SELECCIONADA -->
+                    <section class="ficha-mascota" id="ficha-mascota">
+                        <div class="cabecera-paciente">
+                            <div>
+                                <h2 id="ficha-titulo" style="margin: 0;">Selecciona una mascota</h2>
+                                <p class="meta-suave" id="ficha-subtitulo" style="margin: 4px 0 0;"></p>
+                            </div>
+                            <span class="estado-activo" id="ficha-chip">Chip: -</span>
+                        </div>
+
+                        <nav class="nav-clinica" id="nav-clinica" aria-label="Secciones de la ficha clínica">
+                            <button type="button" class="tab-clinica activa" data-tab="resumen">Resumen</button>
+                            <button type="button" class="tab-clinica" data-tab="pruebas">Pruebas diagnósticas</button>
+                            <button type="button" class="tab-clinica" data-tab="medicacion">Medicación</button>
+                            <button type="button" class="tab-clinica" data-tab="alergias" id="tab-alergias">Alergias</button>
+                            <button type="button" class="tab-clinica" data-tab="vacunas">Vacunas</button>
+                            <button type="button" class="tab-clinica" data-tab="historial">Historial clínico</button>
+                            <button type="button" class="tab-clinica" data-tab="cirugias">Cirugías y curas</button>
+                        </nav>
+
+                        <div id="contenido-tab"></div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://huellapp-api.onrender.com";
+        let usuarioVet = null;
+        let pestanaActiva = "resumen";
+        let mascotaSeleccionadaId = null;
+        let pacientes = [];
+
+        function calcularEdad(fechaStr) {
+            const fecha = new Date(fechaStr);
+            if (Number.isNaN(fecha.getTime())) return "N/D";
+            const hoy = new Date();
+            let anios = hoy.getFullYear() - fecha.getFullYear();
+            const m = hoy.getMonth() - fecha.getMonth();
+            if (m < 0 || (m === 0 && hoy.getDate() < fecha.getDate())) {
+                anios--;
+            }
+            return anios <= 0 ? "menos de 1 año" : `${anios} ${anios === 1 ? "año" : "años"}`;
+        }
+
+        async function cargarPacientesDesdeApi(filtro = "") {
+            const estadoEl = document.getElementById("estado-busqueda");
+            const termino = filtro.trim();
+
+            if (termino.length < 2) {
+                pacientes = [];
+                mascotaSeleccionadaId = null;
+                estadoEl.textContent = "Búsqueda confidencial: escribe al menos 2 caracteres para consultar un paciente.";
+                renderizarFicha();
+                return;
+            }
+
+            estadoEl.textContent = "Buscando paciente...";
+
+            try {
+                const url = new URL(`${API_URL}/api/veterinario/mascotas`);
+                url.searchParams.set("q", termino);
+
+                const resp = await fetch(url.toString(), {
+                    headers: {
+                        "x-vet-id": String(usuarioVet.id)
+                    }
+                });
+
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    estadoEl.textContent = `Error al consultar: ${data.error || resp.status}`;
+                    return;
+                }
+
+                const lista = Array.isArray(data) ? data : (data.mascotas || []);
+
+                pacientes = lista.map((m) => ({
+                    id: m.id,
+                    nombre: m.nombre || "Sin nombre",
+                    especie: m.especie || "No especificada",
+                    raza: m.raza || "No especificada",
+                    edad: m.edad ?? (m.fecha_nacimiento ? calcularEdad(m.fecha_nacimiento) : "N/D"),
+                    nif_chip: m.nif_chip || m.chip || "Sin chip",
+                    dueno: m.dueno || m.propietario || "Sin propietario asignado",
+                    peso: m.peso ? `${m.peso} kg` : "N/D",
+                    temperatura: m.temperatura ? `${m.temperatura} °C` : "N/D",
+                    estadoGeneral: m.estado_general || m.estado || "Registrado",
+                    pruebas: Array.isArray(m.pruebas) ? m.pruebas : [],
+                    medicacion: Array.isArray(m.medicacion) ? m.medicacion : [],
+                    alergias: Array.isArray(m.alergias) ? m.alergias : [],
+                    vacunas: Array.isArray(m.vacunas) ? m.vacunas : [],
+                    historial: Array.isArray(m.historial) ? m.historial : [],
+                    cirugias: Array.isArray(m.cirugias) ? m.cirugias : []
+                }));
+
+                if (!pacientes.some((p) => p.id === mascotaSeleccionadaId)) {
+                    mascotaSeleccionadaId = pacientes[0]?.id ?? null;
+                }
+
+                estadoEl.textContent = pacientes.length
+                    ? `${pacientes.length} coincidencia(s). Haz clic en una sugerencia para ver su ficha.`
+                    : "No hay pacientes que coincidan con la búsqueda.";
+
+                renderizarFicha();
+            } catch (error) {
+                console.error("Error de red al cargar pacientes:", error);
+                estadoEl.textContent = "No se pudo conectar con la API.";
+            }
+        }
+
+        function inicializarVet() {
+            try {
+                usuarioVet = JSON.parse(localStorage.getItem("usuario") || "null");
+            } catch {
+                usuarioVet = null;
+            }
+
+            if (!usuarioVet || (usuarioVet.rol || "").toUpperCase() !== "VETERINARIO") {
+                window.location.href = "login.html";
+                return;
+            }
+
+            const nombre = `${usuarioVet.nombre || "Veterinario"} ${usuarioVet.apellidos || ""}`.trim();
+            document.getElementById("nombre-vet").textContent = nombre;
+            document.getElementById("avatar-vet").textContent = (usuarioVet.nombre || "V").charAt(0).toUpperCase();
+            document.getElementById("colegiado-vet").textContent =
+                `VETERINARIO · Col. ${usuarioVet.num_colegiado || "N/A"}`;
+
+            cargarPacientesDesdeApi("");
+        }
+
+        function renderizarSugerencias(texto = "") {
+            const boxSug = document.getElementById("sugerencias-paciente");
+            const q = texto.trim().toLowerCase();
+
+            if (q.length < 2) {
+                boxSug.style.display = "none";
+                boxSug.innerHTML = "";
+                return;
+            }
+
+            const coincidencias = pacientes.filter((p) =>
+                `${p.nombre} ${p.especie} ${p.raza} ${p.nif_chip} ${p.dueno}`.toLowerCase().includes(q)
+            ).slice(0, 6);
+
+            if (!coincidencias.length) {
+                boxSug.innerHTML = `<div class="item-sugerencia meta-suave">Sin coincidencias</div>`;
+                boxSug.style.display = "block";
+                return;
+            }
+
+            boxSug.innerHTML = coincidencias.map((p) => `
+                <button type="button" class="item-sugerencia" data-id="${p.id}">
+                    <strong>${p.nombre} <span class="meta-suave">(${p.especie})</span></strong>
+                    <span class="meta-suave">Usuario/Dueño: ${p.dueno} · Chip: ${p.nif_chip}</span>
+                </button>
+            `).join("");
+
+            boxSug.style.display = "block";
+
+            boxSug.querySelectorAll(".item-sugerencia[data-id]").forEach((btn) => {
+                btn.addEventListener("mousedown", (e) => {
+                    e.preventDefault();
+                    clearTimeout(temporizadorBusqueda);
+
+                    const idElegido = Number(btn.dataset.id);
+                    const elegido = pacientes.find((item) => Number(item.id) === idElegido);
+                    if (!elegido) return;
+
+                    mascotaSeleccionadaId = elegido.id;
+                    document.getElementById("buscador-paciente").value = elegido.nombre;
+                    boxSug.style.display = "none";
+                    boxSug.innerHTML = "";
+
+                    renderizarFicha();
+                });
+            });
+        }
+
+        function renderizarFicha() {
+            const p = pacientes.find((item) => item.id === mascotaSeleccionadaId);
+            if (!p) {
+                document.getElementById("ficha-titulo").textContent = "Selecciona una mascota";
+                document.getElementById("ficha-subtitulo").textContent = "";
+                document.getElementById("ficha-chip").textContent = "Chip: -";
+                document.getElementById("tab-alergias").innerHTML = "Alergias";
+                document.getElementById("contenido-tab").innerHTML = `<p class="meta-suave">Busca y selecciona un paciente para ver su ficha clínica.</p>`;
+                return;
+            }
+
+            document.getElementById("ficha-titulo").textContent = `${p.nombre} — ${p.especie} (${p.raza})`;
+            document.getElementById("ficha-subtitulo").textContent = `Edad: ${p.edad} · Propietario/a: ${p.dueno}`;
+            document.getElementById("ficha-chip").textContent = `Chip: ${p.nif_chip}`;
+
+            const tabAlergias = document.getElementById("tab-alergias");
+            tabAlergias.innerHTML = p.alergias.length
+                ? `Alergias <span class="badge-alerta">${p.alergias.length}</span>`
+                : "Alergias";
+
+            document.querySelectorAll(".tab-clinica").forEach((b) => {
+                b.classList.toggle("activa", b.dataset.tab === pestanaActiva);
+            });
+
+            renderizarContenidoPestana(p);
+        }
+
+        function renderizarContenidoPestana(p) {
+            const box = document.getElementById("contenido-tab");
+
+            if (pestanaActiva === "resumen") {
+                box.innerHTML = `
+                    <div class="tarjeta-registro">
+                        <strong>Constantes y estado general</strong>
+                        <p class="meta-suave" style="margin: 6px 0 0;">
+                            Peso: <strong>${p.peso}</strong> · Temperatura: <strong>${p.temperatura}</strong> · Estado: <strong>${p.estadoGeneral}</strong>
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (pestanaActiva === "pruebas") {
+                const items = p.pruebas.length
+                    ? p.pruebas.map((r) => `<div class="tarjeta-registro"><strong>${r.titulo}</strong> <span class="meta-suave">(${r.fecha})</span><div class="meta-suave">${r.resultado}</div></div>`).join("")
+                    : `<p class="meta-suave">Sin pruebas diagnósticas registradas.</p>`;
+                box.innerHTML = `
+                    ${items}
+                    <form class="form-rapido" id="form-prueba">
+                        <input type="text" name="titulo" placeholder="Prueba (ej. Radiografía tórax)" required>
+                        <input type="text" name="resultado" placeholder="Resultado u observación" required>
+                        <button type="submit" class="btn-anadir">Añadir prueba</button>
+                    </form>
+                `;
+                document.getElementById("form-prueba").addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.target);
+                    p.pruebas.push({ fecha: new Date().toISOString().slice(0, 10), titulo: fd.get("titulo"), resultado: fd.get("resultado") });
+                    renderizarFicha();
+                });
+                return;
+            }
+
+            if (pestanaActiva === "medicacion") {
+                const items = p.medicacion.length
+                    ? p.medicacion.map((m) => `<div class="tarjeta-registro"><strong>${m.nombre}</strong> · <span class="meta-suave">${m.pauta} (${m.estado})</span></div>`).join("")
+                    : `<p class="meta-suave">Sin medicación registrada.</p>`;
+                box.innerHTML = `
+                    ${items}
+                    <form class="form-rapido" id="form-med">
+                        <input type="text" name="nombre" placeholder="Fármaco / tratamiento" required>
+                        <input type="text" name="pauta" placeholder="Dosis y frecuencia" required>
+                        <button type="submit" class="btn-anadir">Añadir medicación</button>
+                    </form>
+                `;
+                document.getElementById("form-med").addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.target);
+                    p.medicacion.push({ nombre: fd.get("nombre"), pauta: fd.get("pauta"), estado: "Activa" });
+                    renderizarFicha();
+                });
+                return;
+            }
+
+            if (pestanaActiva === "alergias") {
+                const items = p.alergias.length
+                    ? p.alergias.map((a) => `<div class="tarjeta-registro"><strong>${a.agente}</strong> <span class="badge-alerta">${a.gravedad}</span><div class="meta-suave">Reacción: ${a.reaccion}</div></div>`).join("")
+                    : `<p class="meta-suave">Sin alergias conocidas registradas.</p>`;
+                box.innerHTML = `
+                    ${items}
+                    <form class="form-rapido" id="form-alergia">
+                        <input type="text" name="agente" placeholder="Alérgeno (alimento, fármaco...)" required>
+                        <input type="text" name="reaccion" placeholder="Reacción observada" required>
+                        <select name="gravedad">
+                            <option value="Leve">Leve</option>
+                            <option value="Moderada">Moderada</option>
+                            <option value="Grave">Grave</option>
+                        </select>
+                        <button type="submit" class="btn-anadir">Añadir alergia</button>
+                    </form>
+                `;
+                document.getElementById("form-alergia").addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.target);
+                    p.alergias.push({ agente: fd.get("agente"), reaccion: fd.get("reaccion"), gravedad: fd.get("gravedad") });
+                    renderizarFicha();
+                });
+                return;
+            }
+
+            if (pestanaActiva === "vacunas") {
+                const items = p.vacunas.length
+                    ? p.vacunas.map((v) => `<div class="tarjeta-registro"><strong>${v.nombre}</strong><div class="meta-suave">Aplicada: ${v.fecha} · Próxima: ${v.proxima || "Por definir"}</div></div>`).join("")
+                    : `<p class="meta-suave">Sin vacunas registradas.</p>`;
+                box.innerHTML = `
+                    ${items}
+                    <form class="form-rapido" id="form-vacuna">
+                        <input type="text" name="nombre" placeholder="Vacuna" required>
+                        <input type="text" name="proxima" placeholder="Próxima dosis (ej. 2027-06-15)">
+                        <button type="submit" class="btn-anadir">Añadir vacuna</button>
+                    </form>
+                `;
+                document.getElementById("form-vacuna").addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.target);
+                    p.vacunas.push({ nombre: fd.get("nombre"), fecha: new Date().toISOString().slice(0, 10), proxima: fd.get("proxima") });
+                    renderizarFicha();
+                });
+                return;
+            }
+
+            if (pestanaActiva === "historial") {
+                const items = p.historial.length
+                    ? p.historial.map((h) => `<div class="tarjeta-registro"><strong>${h.motivo}</strong> <span class="meta-suave">(${h.fecha})</span><div class="meta-suave">${h.nota}</div></div>`).join("")
+                    : `<p class="meta-suave">Sin consultas previas registradas.</p>`;
+                box.innerHTML = `
+                    ${items}
+                    <form class="form-rapido" id="form-historial">
+                        <input type="text" name="motivo" placeholder="Motivo de consulta" required>
+                        <input type="text" name="nota" placeholder="Notas clínicas" required>
+                        <button type="submit" class="btn-anadir">Añadir visita</button>
+                    </form>
+                `;
+                document.getElementById("form-historial").addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.target);
+                    p.historial.push({ fecha: new Date().toISOString().slice(0, 10), motivo: fd.get("motivo"), nota: fd.get("nota") });
+                    renderizarFicha();
+                });
+                return;
+            }
+
+            if (pestanaActiva === "cirugias") {
+                const items = p.cirugias.length
+                    ? p.cirugias.map((c) => `<div class="tarjeta-registro"><strong>${c.procedimiento}</strong> <span class="meta-suave">(${c.fecha})</span><div class="meta-suave">${c.nota}</div></div>`).join("")
+                    : `<p class="meta-suave">Sin cirugías ni curas registradas.</p>`;
+                box.innerHTML = `
+                    ${items}
+                    <form class="form-rapido" id="form-cirugia">
+                        <input type="text" name="procedimiento" placeholder="Cirugía o cura" required>
+                        <input type="text" name="nota" placeholder="Observaciones" required>
+                        <button type="submit" class="btn-anadir">Añadir registro</button>
+                    </form>
+                `;
+                document.getElementById("form-cirugia").addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.target);
+                    p.cirugias.push({ fecha: new Date().toISOString().slice(0, 10), procedimiento: fd.get("procedimiento"), nota: fd.get("nota") });
+                    renderizarFicha();
+                });
+            }
+        }
+
+        document.querySelectorAll(".tab-clinica").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                pestanaActiva = btn.dataset.tab;
+                renderizarFicha();
+            });
+        });
+
+        let temporizadorBusqueda = null;
+        const inputBuscador = document.getElementById("buscador-paciente");
+
+        inputBuscador.addEventListener("input", (e) => {
+            const valor = e.target.value;
+            clearTimeout(temporizadorBusqueda);
+
+            if (valor.trim().length < 2) {
+                renderizarSugerencias("");
+                cargarPacientesDesdeApi("");
+                return;
+            }
+
+            temporizadorBusqueda = setTimeout(async () => {
+                await cargarPacientesDesdeApi(valor);
+                if (document.activeElement === inputBuscador && inputBuscador.value.trim().length >= 2) {
+                    renderizarSugerencias(inputBuscador.value);
+                }
+            }, 200);
+        });
+
+        inputBuscador.addEventListener("focus", (e) => {
+            if (e.target.value.trim().length >= 2) {
+                renderizarSugerencias(e.target.value);
+            }
+        });
+
+        document.addEventListener("click", (e) => {
+            const cont = document.querySelector(".buscador-con-sugerencias");
+            if (cont && !cont.contains(e.target)) {
+                const boxSug = document.getElementById("sugerencias-paciente");
+                boxSug.style.display = "none";
+            }
+        });
+
+        inputBuscador.addEventListener("focus", (e) => {
+            if (e.target.value.trim().length >= 2) {
+                renderizarSugerencias(e.target.value);
+            }
+        });
+
+        document.addEventListener("click", (e) => {
+            const cont = document.querySelector(".buscador-con-sugerencias");
+            if (cont && !cont.contains(e.target)) {
+                document.getElementById("sugerencias-paciente").style.display = "none";
+            }
+        });
+
+        document.getElementById("btn-cerrar-sesion-vet").addEventListener("click", () => {
+            localStorage.removeItem("usuario");
+            window.location.href = "login.html";
+        });
+
+        inicializarVet();
+    </script>
+</body>
+</html>

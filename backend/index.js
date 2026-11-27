@@ -93,7 +93,7 @@ app.get('/api/mascotas', async (req, res) => {
     }
 });
 
-// OBTENER UNA MASCOTA POR ID (PARA PERFIL DETALLADO / HISTORIAL)
+// == OBTENER UNA MASCOTA POR ID (PARA PERFIL DETALLADO / HISTORIAL) ==
 app.get('/api/mascotas/:id', async (req, res) => {
     const { id } = req.params;
 
@@ -143,6 +143,102 @@ app.put('/api/usuarios/:id', async (req, res) => {
     }
 });
 
+const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'admin1234';
+
+function verificarAdmin(req, res, next) {
+    const clave = req.headers['x-admin-password'];
+    if (!clave || clave !== ADMIN_PASS) {
+        return res.status(401).json({ error: 'Contraseña de administrador incorrecta' });
+    }
+    next();
+}
+
+// == OBTENER USUARIOS Y MASCOTAS PARA EL PANEL ADMIN ==
+app.get('/api/admin/resumen', verificarAdmin, async (req, res) => {
+    try {
+        const usuariosRes = await pool.query(
+            'SELECT id, nombre, apellidos, email, telefono, rol FROM users ORDER BY id ASC'
+        );
+        const mascotasRes = await pool.query(
+            `SELECT m.*, u.nombre AS dueno_nombre, u.email AS dueno_email
+             FROM mascotas m
+             LEFT JOIN users u ON m.usuario_id = u.id
+             ORDER BY m.id DESC`
+        );
+
+        res.json({
+            usuarios: usuariosRes.rows,
+            mascotas: mascotasRes.rows
+        });
+    } catch (error) {
+        console.error("🚨 ERROR EN ADMIN RESUMEN:", error);
+        res.status(500).json({ error: 'Error al cargar los datos de administración' });
+    }
+});
+
+// == REASIGNAR MASCOTA A OTRO USUARIO ==
+app.patch('/api/mascotas/:id/usuario', verificarAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { usuario_id } = req.body;
+
+    if (!usuario_id) {
+        return res.status(400).json({ error: 'Falta el nuevo usuario_id' });
+    }
+
+    try {
+        const actualizada = await pool.query(
+            `UPDATE mascotas
+             SET usuario_id = $1
+             WHERE id = $2
+             RETURNING *`,
+            [usuario_id, id]
+        );
+
+        if (actualizada.rows.length === 0) {
+            return res.status(404).json({ error: 'Mascota no encontrada' });
+        }
+
+        res.json({
+            mensaje: 'Mascota reasignada correctamente',
+            mascota: actualizada.rows[0]
+        });
+    } catch (error) {
+        console.error("🚨 ERROR AL REASIGNAR MASCOTA:", error);
+        if (error.code === '23503') {
+            return res.status(400).json({ error: 'Ese usuario_id no existe en users' });
+        }
+        res.status(500).json({ error: 'Error al reasignar la mascota' });
+    }
+});
+
+// == ELIMINAR MASCOTA POR ID ==
+app.delete('/api/mascotas/:id', verificarAdmin, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const borrada = await pool.query(
+            'DELETE FROM mascotas WHERE id = $1 RETURNING id, nombre',
+            [id]
+        );
+
+        if (borrada.rows.length === 0) {
+            return res.status(404).json({ error: 'Mascota no encontrada' });
+        }
+
+        res.json({
+            mensaje: 'Mascota eliminada correctamente',
+            mascota: borrada.rows[0]
+        });
+    } catch (error) {
+        console.error("🚨 ERROR AL ELIMINAR MASCOTA:", error);
+        res.status(500).json({ error: 'Error al eliminar la mascota' });
+    }
+});
+
+
+
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en puerto ${PORT}`);
@@ -180,5 +276,78 @@ app.post('/api/mascotas', async (req, res) => {
             return res.status(400).json({ error: 'Ese NIF/Chip ya está registrado' });
         }
         res.status(500).json({ error: 'Error al guardar la mascota en la base de datos' });
+    }
+});
+//=== VERIFICACIÓN DE ADMIN ===
+async function verificarAdmin(req, res, next) {
+    const adminId = req.headers['x-admin-id'];
+    if (!adminId) {
+        return res.status(401).json({ error: 'Falta identificación de administrador' });
+    }
+
+    try {
+        const result = await pool.query(
+            'SELECT id, rol FROM users WHERE id = $1',
+            [adminId]
+        );
+        const user = result.rows[0];
+
+        if (!user || (user.rol || '').toUpperCase() !== 'ADMIN') {
+            return res.status(403).json({ error: 'Acceso denegado: no tienes permisos de administrador' });
+        }
+
+        next();
+    } catch (error) {
+        console.error('Error verificando admin:', error);
+        res.status(500).json({ error: 'Error interno al verificar permisos' });
+    }
+}
+//== RUTA CONSULTA MASCOTAS ==//
+
+app.get('/api/veterinario/mascotas', async (req, res) => {
+    const vetId = req.headers['x-vet-id'];
+
+    if (!vetId) {
+        return res.status(401).json({ error: 'Falta la cabecera x-vet-id' });
+    }
+
+    try {
+        const vetCheck = await pool.query(
+            'SELECT id, rol FROM users WHERE id = $1',
+            [vetId]
+        );
+
+        if (vetCheck.rows.length === 0 || (vetCheck.rows[0].rol || '').toUpperCase() !== 'VETERINARIO') {
+            return res.status(403).json({ error: 'Acceso denegado: se requiere rol VETERINARIO' });
+        }
+
+        const q = (req.query.q || '').trim();
+        let sql = `
+            SELECT
+                m.*,
+                TRIM(CONCAT(u.nombre, ' ', COALESCE(u.apellidos, ''))) AS dueno
+            FROM mascotas m
+            LEFT JOIN users u ON m.usuario_id = u.id
+        `;
+        const params = [];
+
+        if (q) {
+            params.push(`%${q}%`);
+            sql += `
+                WHERE m.nombre ILIKE $1
+                   OR COALESCE(m.nif_chip, '') ILIKE $1
+                   OR COALESCE(u.nombre, '') ILIKE $1
+                   OR COALESCE(u.apellidos, '') ILIKE $1
+                   OR CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellidos, '')) ILIKE $1
+            `;
+        }
+
+        sql += ' ORDER BY m.id DESC';
+
+        const result = await pool.query(sql, params);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener mascotas para veterinario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
