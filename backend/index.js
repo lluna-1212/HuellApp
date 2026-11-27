@@ -302,3 +302,52 @@ async function verificarAdmin(req, res, next) {
         res.status(500).json({ error: 'Error interno al verificar permisos' });
     }
 }
+//== RUTA CONSULTA MASCOTAS ==//
+
+app.get('/api/veterinario/mascotas', async (req, res) => {
+    const vetId = req.headers['x-vet-id'];
+
+    if (!vetId) {
+        return res.status(401).json({ error: 'Falta la cabecera x-vet-id' });
+    }
+
+    try {
+        const vetCheck = await pool.query(
+            'SELECT id, rol FROM users WHERE id = $1',
+            [vetId]
+        );
+
+        if (vetCheck.rows.length === 0 || (vetCheck.rows[0].rol || '').toUpperCase() !== 'VETERINARIO') {
+            return res.status(403).json({ error: 'Acceso denegado: se requiere rol VETERINARIO' });
+        }
+
+        const q = (req.query.q || '').trim();
+        let sql = `
+            SELECT
+                m.*,
+                TRIM(CONCAT(u.nombre, ' ', COALESCE(u.apellidos, ''))) AS dueno
+            FROM mascotas m
+            LEFT JOIN users u ON m.usuario_id = u.id
+        `;
+        const params = [];
+
+        if (q) {
+            params.push(`%${q}%`);
+            sql += `
+                WHERE m.nombre ILIKE $1
+                   OR COALESCE(m.nif_chip, '') ILIKE $1
+                   OR COALESCE(u.nombre, '') ILIKE $1
+                   OR COALESCE(u.apellidos, '') ILIKE $1
+                   OR CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellidos, '')) ILIKE $1
+            `;
+        }
+
+        sql += ' ORDER BY m.id DESC';
+
+        const result = await pool.query(sql, params);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener mascotas para veterinario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});

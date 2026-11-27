@@ -1,6 +1,6 @@
-/* =========================================
+/* ======================
    RESETEO Y ESTILOS BASE
-   ========================================= */
+   ======================*/
 * {
     box-sizing: border-box;
     margin: 0;
@@ -15,9 +15,9 @@ body {
     min-height: 100vh;
 }
 
-/* =========================================
+/* ======================================
    PANTALLAS CENTRADAS (LOGIN Y REGISTRO)
-   ========================================= */
+   ======================================*/
 .pantalla-centrada {
     display: flex;
     justify-content: center;
@@ -35,6 +35,11 @@ body {
     max-width: 400px;
 }
 
+.cabecera {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
 .cabecera h1 {
     color: #1f2937;
     text-align: center;
@@ -46,6 +51,26 @@ body {
     text-align: center;
     font-size: 0.9rem;
     margin-bottom: 20px;
+}
+
+.logo-login {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    height: auto;
+    margin: 0 auto 10px;
+    mix-blend-mode: multiply;
+}
+
+.contenedor-login .logo-register,
+.contenedor-login .logo-nueva-mascota {
+    display: block;
+    width: 215px;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto 12px;
+    transform: none;
+    mix-blend-mode: multiply;
 }
 
 .grupo-input {
@@ -95,9 +120,9 @@ body {
     background-color: #0f766e;
 }
 
-/* =========================================
+/* ============================
    NAVEGACIÓN SUPERIOR (NAVBAR)
-   ========================================= */
+   ============================ */
 .navbar {
     background-color: #ffffff;
     padding: 15px 30px;
@@ -139,7 +164,9 @@ body {
     min-height: 100vh;
 }
 
-/* --- SIDEBAR --- */
+/* ==========
+    SIDEBAR
+   ==========*/
 .sidebar {
     width: 250px;
     background-color: #0f766e;
@@ -149,10 +176,27 @@ body {
     padding: 25px 20px;
 }
 
+.marca {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 35px;
+    text-align: center;
+}
+
 .marca h2 {
-    font-size: 1.5rem;
-    margin-bottom: 40px;
+    font-size: 1.4rem;
     letter-spacing: 0.5px;
+}
+
+.logo-sidebar {
+    width: 140px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    mix-blend-mode: multiply;
 }
 
 .menu-lateral {
@@ -183,7 +227,9 @@ body {
     text-align: center;
 }
 
-/* --- CONTENIDO PRINCIPAL --- */
+/* ===================
+   CONTENIDO PRINCIPAL
+   =================== */
 .contenido-principal {
     flex: 1;
     display: flex;
@@ -196,7 +242,9 @@ body {
     padding: 0 20px;
 }
 
-/* --- TOPBAR (USUARIO ARRIBA A LA DERECHA) --- */
+/* =========================
+   USUARIO SUBPERIOR DERECHA
+   ========================= */
 .topbar {
     background-color: #ffffff;
     height: 70px;
@@ -265,9 +313,9 @@ body {
     background-color: #fecaca;
 }
 
-/* =========================================
+/* ======================================
    ÁREA DE TRABAJO Y TARJETAS DE MASCOTAS
-   ========================================= */
+   ======================================*/
 .area-trabajo {
     padding: 35px;
     max-width: 1200px;
@@ -317,7 +365,6 @@ body {
     transform: translateY(-1px);
 }
 
-/* Cuadrícula de tarjetas */
 .grid-mascotas {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -333,6 +380,7 @@ body {
     text-align: center;
     text-decoration: none;
     color: inherit;
+    cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
@@ -419,10 +467,9 @@ body {
     border-color: #9ca3af;
 }
 
-.tarjeta-mascota {
-    cursor: pointer;
-}
-
+/*==================
+    FICHA DE MASCOTA
+    ================ */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -492,53 +539,128 @@ body {
     margin-bottom: 0;
 }
 
-.marca {
+/* =================================
+   FICHA CLÍNICA (VISTA VETERINARIO)
+   ================================= */
+.layout-clinico {
+    display: grid;
+    grid-template-columns: 310px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .layout-clinico {
+        grid-template-columns: 1fr;
+    }
+}
+
+.panel-pacientes,
+.ficha-mascota {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.lista-pacientes {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 35px;
-    overflow: visible;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    max-height: 520px;
+    overflow-y: auto;
 }
 
-.logo-sidebar {
-    width: 210px;
-    max-width: none;
-    height: auto;
-    display: block;
-    mix-blend-mode: multiply;
-    transform: scale(1.45);
+.item-paciente {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    text-align: left;
+    background-color: #f8fafc;
+    transition: background-color 0.15s, border-color 0.15s;
 }
 
-.cabecera {
-    text-align: center;
-    margin-bottom: 20px;
+.item-paciente:hover {
+    border-color: #0d9488;
 }
 
-.logo-login {
-    display: block;
-    width: 100%;
-    max-width: 240px;
-    height: auto;
-    margin: 0 auto 10px;
-    mix-blend-mode: multiply;
+.item-paciente.activo {
+    background-color: #f0fdfa;
+    border-color: #0d9488;
 }
 
-.contenedor-login .logo-register {
-    display: block;
-    width: 215px;
-    max-width: 100%;
-    height: auto;
-    margin: 0 auto 12px;
-    transform: none;
-    mix-blend-mode: multiply;
+.cabecera-paciente {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-.contenedor-login .logo-nueva-mascota {
-    display: block;
-    width: 215px;
-    max-width: 100%;
-    height: auto;
-    margin: 0 auto 12px;
-    transform: none;
-    mix-blend-mode: multiply;
+.nav-clinica {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 16px 0 20px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+}
+
+.tab-clinica {
+    background-color: #f1f5f9;
+    color: #334155;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tab-clinica.activa {
+    background-color: #0d9488;
+    color: #ffffff;
+}
+
+.badge-alerta {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+.tarjeta-registro {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background-color: #f8fafc;
+}
+
+.form-rapido {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.form-rapido input,
+.form-rapido select {
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+}
+
+.meta-suave {
+    font-size: 0.88rem;
+    color: #64748b;
 }
