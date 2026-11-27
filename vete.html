@@ -225,14 +225,18 @@
             boxSug.style.display = "block";
 
             boxSug.querySelectorAll(".item-sugerencia[data-id]").forEach((btn) => {
-                btn.addEventListener("click", () => {
+                btn.addEventListener("mousedown", (e) => {
+                    e.preventDefault();
+                    clearTimeout(temporizadorBusqueda);
+
                     const idElegido = Number(btn.dataset.id);
-                    const elegido = pacientes.find((item) => item.id === idElegido);
+                    const elegido = pacientes.find((item) => Number(item.id) === idElegido);
                     if (!elegido) return;
 
                     mascotaSeleccionadaId = elegido.id;
                     document.getElementById("buscador-paciente").value = elegido.nombre;
                     boxSug.style.display = "none";
+                    boxSug.innerHTML = "";
 
                     renderizarFicha();
                 });
@@ -424,18 +428,34 @@
 
         inputBuscador.addEventListener("input", (e) => {
             const valor = e.target.value;
+            clearTimeout(temporizadorBusqueda);
+
             if (valor.trim().length < 2) {
                 renderizarSugerencias("");
+                cargarPacientesDesdeApi("");
+                return;
             }
 
-            clearTimeout(temporizadorBusqueda);
-            temporizadorBusqueda = setTimeout(() => {
-                cargarPacientesDesdeApi(valor).then(() => {
-                    if (document.activeElement === inputBuscador && inputBuscador.value.trim().length >= 2) {
-                        renderizarSugerencias(inputBuscador.value);
-                    }
-                });
+            temporizadorBusqueda = setTimeout(async () => {
+                await cargarPacientesDesdeApi(valor);
+                if (document.activeElement === inputBuscador && inputBuscador.value.trim().length >= 2) {
+                    renderizarSugerencias(inputBuscador.value);
+                }
             }, 200);
+        });
+
+        inputBuscador.addEventListener("focus", (e) => {
+            if (e.target.value.trim().length >= 2) {
+                renderizarSugerencias(e.target.value);
+            }
+        });
+
+        document.addEventListener("click", (e) => {
+            const cont = document.querySelector(".buscador-con-sugerencias");
+            if (cont && !cont.contains(e.target)) {
+                const boxSug = document.getElementById("sugerencias-paciente");
+                boxSug.style.display = "none";
+            }
         });
 
         inputBuscador.addEventListener("focus", (e) => {
