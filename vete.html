@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HuellApp - Consulta Veterinaria</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="img/logo_web.png"> 
+    <link rel="icon" type="image/png" href="img/logo_web.png">
 </head>
 <body>
 
@@ -44,18 +44,21 @@
                 <div class="cabecera-seccion">
                     <div>
                         <h1>Historial y Ficha Clínica</h1>
-                        <p class="subtitulo">Selecciona un paciente para revisar o registrar datos clínicos</p>
+                        <p class="subtitulo">Busca un paciente para revisar o registrar datos clínicos</p>
                     </div>
                 </div>
 
                 <div class="layout-clinico">
-                    <!-- BUSCADOR Y LISTA DE MASCOTAS -->
+                    <!-- BUSCADOR CON SUGERENCIAS -->
                     <section class="panel-pacientes">
-                        <h2 style="margin-top: 0; font-size: 1.05rem;">Pacientes</h2>
+                        <h2 style="margin-top: 0; font-size: 1.05rem;">Buscar paciente</h2>
                         <div class="buscador-con-sugerencias">
-                            <input type="search" id="buscador-paciente" placeholder="Buscar nombre, chip o dueño..." autocomplete="off" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box;">
+                            <input type="search" id="buscador-paciente" placeholder="Nombre, chip o dueño (mín. 2 letras)..." autocomplete="off" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box;">
                             <div id="sugerencias-paciente" class="lista-sugerencias" style="display: none;"></div>
                         </div>
+                        <p id="estado-busqueda" class="meta-suave" style="margin: 10px 0 0;">
+                            Búsqueda confidencial: escribe al menos 2 caracteres para consultar un paciente.
+                        </p>
                     </section>
 
                     <!-- FICHA DE LA MASCOTA SELECCIONADA -->
@@ -105,14 +108,22 @@
         }
 
         async function cargarPacientesDesdeApi(filtro = "") {
-            const cont = document.getElementById("lista-pacientes");
-            cont.innerHTML = `<p class="meta-suave">Cargando pacientes...</p>`;
+            const estadoEl = document.getElementById("estado-busqueda");
+            const termino = filtro.trim();
+
+            if (termino.length < 2) {
+                pacientes = [];
+                mascotaSeleccionadaId = null;
+                estadoEl.textContent = "Búsqueda confidencial: escribe al menos 2 caracteres para consultar un paciente.";
+                renderizarFicha();
+                return;
+            }
+
+            estadoEl.textContent = "Buscando paciente...";
 
             try {
                 const url = new URL(`${API_URL}/api/veterinario/mascotas`);
-                if (filtro.trim()) {
-                    url.searchParams.set("q", filtro.trim());
-                }
+                url.searchParams.set("q", termino);
 
                 const resp = await fetch(url.toString(), {
                     headers: {
@@ -123,7 +134,7 @@
                 const data = await resp.json();
 
                 if (!resp.ok) {
-                    cont.innerHTML = `<p class="meta-suave">Error al cargar mascotas: ${data.error || resp.status}</p>`;
+                    estadoEl.textContent = `Error al consultar: ${data.error || resp.status}`;
                     return;
                 }
 
@@ -152,11 +163,14 @@
                     mascotaSeleccionadaId = pacientes[0]?.id ?? null;
                 }
 
-                renderizarListaPacientes();
+                estadoEl.textContent = pacientes.length
+                    ? `${pacientes.length} coincidencia(s). Haz clic en una sugerencia para ver su ficha.`
+                    : "No hay pacientes que coincidan con la búsqueda.";
+
                 renderizarFicha();
             } catch (error) {
                 console.error("Error de red al cargar pacientes:", error);
-                cont.innerHTML = `<p class="meta-suave">No se pudo conectar con la API.</p>`;
+                estadoEl.textContent = "No se pudo conectar con la API.";
             }
         }
 
@@ -178,14 +192,14 @@
             document.getElementById("colegiado-vet").textContent =
                 `VETERINARIO · Col. ${usuarioVet.num_colegiado || "N/A"}`;
 
-            cargarPacientesDesdeApi();
+            cargarPacientesDesdeApi("");
         }
 
         function renderizarSugerencias(texto = "") {
             const boxSug = document.getElementById("sugerencias-paciente");
             const q = texto.trim().toLowerCase();
 
-            if (!q) {
+            if (q.length < 2) {
                 boxSug.style.display = "none";
                 boxSug.innerHTML = "";
                 return;
@@ -217,34 +231,9 @@
                     if (!elegido) return;
 
                     mascotaSeleccionadaId = elegido.id;
-                    document.getElementById("buscador-paciente").value = elegido.dueno || elegido.nombre;
+                    document.getElementById("buscador-paciente").value = elegido.nombre;
                     boxSug.style.display = "none";
 
-                    renderizarListaPacientes();
-                    renderizarFicha();
-                });
-            });
-        }
-
-        function renderizarListaPacientes() {
-            const cont = document.getElementById("lista-pacientes");
-
-            if (!pacientes.length) {
-                cont.innerHTML = `<p class="meta-suave">No hay pacientes que coincidan.</p>`;
-                return;
-            }
-
-            cont.innerHTML = pacientes.map((p) => `
-                <button type="button" class="item-paciente ${p.id === mascotaSeleccionadaId ? "activo" : ""}" data-id="${p.id}">
-                    <div><strong>${p.nombre}</strong> <span class="meta-suave">· ${p.especie} (${p.raza})</span></div>
-                    <div class="meta-suave">Dueño: ${p.dueno} · Chip: ${p.nif_chip}</div>
-                </button>
-            `).join("");
-
-            cont.querySelectorAll(".item-paciente").forEach((btn) => {
-                btn.addEventListener("click", () => {
-                    mascotaSeleccionadaId = Number(btn.dataset.id);
-                    renderizarListaPacientes();
                     renderizarFicha();
                 });
             });
@@ -253,10 +242,11 @@
         function renderizarFicha() {
             const p = pacientes.find((item) => item.id === mascotaSeleccionadaId);
             if (!p) {
-                document.getElementById("ficha-titulo").textContent = "Sin paciente seleccionado";
+                document.getElementById("ficha-titulo").textContent = "Selecciona una mascota";
                 document.getElementById("ficha-subtitulo").textContent = "";
                 document.getElementById("ficha-chip").textContent = "Chip: -";
-                document.getElementById("contenido-tab").innerHTML = `<p class="meta-suave">No hay datos para mostrar.</p>`;
+                document.getElementById("tab-alergias").innerHTML = "Alergias";
+                document.getElementById("contenido-tab").innerHTML = `<p class="meta-suave">Busca y selecciona un paciente para ver su ficha clínica.</p>`;
                 return;
             }
 
@@ -434,12 +424,14 @@
 
         inputBuscador.addEventListener("input", (e) => {
             const valor = e.target.value;
-            renderizarSugerencias(valor);
+            if (valor.trim().length < 2) {
+                renderizarSugerencias("");
+            }
 
             clearTimeout(temporizadorBusqueda);
             temporizadorBusqueda = setTimeout(() => {
                 cargarPacientesDesdeApi(valor).then(() => {
-                    if (document.activeElement === inputBuscador && inputBuscador.value.trim()) {
+                    if (document.activeElement === inputBuscador && inputBuscador.value.trim().length >= 2) {
                         renderizarSugerencias(inputBuscador.value);
                     }
                 });
@@ -447,7 +439,7 @@
         });
 
         inputBuscador.addEventListener("focus", (e) => {
-            if (e.target.value.trim()) {
+            if (e.target.value.trim().length >= 2) {
                 renderizarSugerencias(e.target.value);
             }
         });
