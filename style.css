@@ -491,3 +491,54 @@ body {
 .ficha-datos p:last-child {
     margin-bottom: 0;
 }
+
+.marca {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 35px;
+    overflow: visible;
+}
+
+.logo-sidebar {
+    width: 210px;
+    max-width: none;
+    height: auto;
+    display: block;
+    mix-blend-mode: multiply;
+    transform: scale(1.45);
+}
+
+.cabecera {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logo-login {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    height: auto;
+    margin: 0 auto 10px;
+    mix-blend-mode: multiply;
+}
+
+.contenedor-login .logo-register {
+    display: block;
+    width: 215px;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto 12px;
+    transform: none;
+    mix-blend-mode: multiply;
+}
+
+.contenedor-login .logo-nueva-mascota {
+    display: block;
+    width: 215px;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto 12px;
+    transform: none;
+    mix-blend-mode: multiply;
+}
